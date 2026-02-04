@@ -35,14 +35,20 @@ export function Sidebar() {
     .filter(t => t.label.toLowerCase().includes(search.toLowerCase()));
 
   const handleNewTerminal = async () => {
-    const home = await homeDir();
-    await createTerminal(
-      `Terminal ${terminals.size + 1}`,
-      home,
-      [],
-      {},
-      TAG_COLORS[terminals.size % TAG_COLORS.length]
-    );
+    try {
+      const home = await homeDir();
+      console.log('Creating new terminal in:', home);
+      await createTerminal(
+        `Terminal ${terminals.size + 1}`,
+        home,
+        [],
+        {},
+        TAG_COLORS[terminals.size % TAG_COLORS.length]
+      );
+    } catch (error) {
+      console.error('Failed to create terminal:', error);
+      alert('Failed to create terminal: ' + String(error));
+    }
   };
 
   const handleRename = async (id: string, newLabel: string) => {

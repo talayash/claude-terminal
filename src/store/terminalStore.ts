@@ -45,26 +45,33 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   activeTerminalId: null,
 
   createTerminal: async (label, workingDirectory, claudeArgs, envVars, colorTag) => {
-    const config = await invoke<TerminalConfig>('create_terminal', {
-      request: {
-        label,
-        working_directory: workingDirectory,
-        claude_args: claudeArgs,
-        env_vars: envVars,
-        color_tag: colorTag || null,
-      },
-    });
+    try {
+      console.log('Creating terminal with:', { label, workingDirectory, claudeArgs, envVars, colorTag });
+      const config = await invoke<TerminalConfig>('create_terminal', {
+        request: {
+          label,
+          working_directory: workingDirectory,
+          claude_args: claudeArgs,
+          env_vars: envVars,
+          color_tag: colorTag || null,
+        },
+      });
+      console.log('Terminal created:', config);
 
-    set((state) => {
-      const newTerminals = new Map(state.terminals);
-      newTerminals.set(config.id, { config, xterm: null });
-      return {
-        terminals: newTerminals,
-        activeTerminalId: config.id,
-      };
-    });
+      set((state) => {
+        const newTerminals = new Map(state.terminals);
+        newTerminals.set(config.id, { config, xterm: null });
+        return {
+          terminals: newTerminals,
+          activeTerminalId: config.id,
+        };
+      });
 
-    return config.id;
+      return config.id;
+    } catch (error) {
+      console.error('Failed to create terminal:', error);
+      throw error;
+    }
   },
 
   closeTerminal: async (id) => {

@@ -58,32 +58,33 @@ impl TerminalManager {
 
         let pty_pair = pty_system
             .openpty(PtySize {
-                rows: 24,
-                cols: 80,
+                rows: 30,
+                cols: 120,
                 pixel_width: 0,
                 pixel_height: 0,
             })
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("Failed to open pty: {}", e))?;
 
-        // Use PowerShell on Windows for better compatibility
+        // Use cmd.exe on Windows
         #[cfg(target_os = "windows")]
-        let mut cmd = CommandBuilder::new("powershell.exe");
-        #[cfg(target_os = "windows")]
-        {
-            cmd.arg("-NoLogo");
-            cmd.arg("-NoExit");
-        }
+        let mut cmd = CommandBuilder::new("cmd.exe");
 
         #[cfg(not(target_os = "windows"))]
         let mut cmd = CommandBuilder::new("bash");
 
-        cmd.cwd(&working_directory);
+        // Set working directory
+        if !working_directory.is_empty() {
+            cmd.cwd(&working_directory);
+        }
 
+        // Set environment variables
         for (key, value) in &env_vars {
             cmd.env(key, value);
         }
 
-        let _child = pty_pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
+        // Spawn the command
+        let _child = pty_pair.slave.spawn_command(cmd)
+            .map_err(|e| format!("Failed to spawn command: {}", e))?;
 
         let id = Uuid::new_v4().to_string();
         let config = TerminalConfig {
@@ -98,24 +99,15 @@ impl TerminalManager {
             color_tag,
         };
 
-        let mut reader = pty_pair.master.try_clone_reader().map_err(|e| e.to_string())?;
-        let mut writer = pty_pair.master.take_writer().map_err(|e| e.to_string())?;
+        let mut reader = pty_pair.master.try_clone_reader()
+            .map_err(|e| format!("Failed to clone reader: {}", e))?;
+        let writer = pty_pair.master.take_writer()
+            .map_err(|e| format!("Failed to take writer: {}", e))?;
 
-        // If claude_args is not empty or we want to auto-start claude, send the command
-        // Build the claude command
-        let claude_cmd = if claude_args.is_empty() {
-            "claude\r\n".to_string()
-        } else {
-            format!("claude {}\r\n", claude_args.join(" "))
-        };
-
-        // Send claude command to start Claude Code automatically
-        let _ = writer.write_all(claude_cmd.as_bytes());
-        let _ = writer.flush();
-
+        // Spawn reader thread
         let terminal_id = id.clone();
         std::thread::spawn(move || {
-            let mut buf = [0u8; 4096];
+            let mut buf = [0u8; 8192];
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) => break,
@@ -125,7 +117,10 @@ impl TerminalManager {
                             break;
                         }
                     }
-                    Err(_) => break,
+                    Err(e) => {
+                        eprintln!("Error reading from pty: {}", e);
+                        break;
+                    }
                 }
             }
         });
@@ -147,8 +142,8 @@ impl TerminalManager {
             terminal
                 .writer
                 .write_all(data)
-                .map_err(|e| e.to_string())?;
-            terminal.writer.flush().map_err(|e| e.to_string())?;
+                .map_err(|e| format!("Failed to write: {}", e))?;
+            terminal.writer.flush().map_err(|e| format!("Failed to flush: {}", e))?;
             Ok(())
         } else {
             Err("Terminal not found".to_string())
@@ -166,7 +161,7 @@ impl TerminalManager {
                     pixel_width: 0,
                     pixel_height: 0,
                 })
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| format!("Failed to resize: {}", e))?;
             Ok(())
         } else {
             Err("Terminal not found".to_string())
