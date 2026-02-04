@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Copy, Check, ChevronDown, ChevronRight, Rocket, Folder, GitBranch, Code, Bug, Terminal } from 'lucide-react';
+import { Search, Copy, Check, ChevronDown, ChevronRight, Rocket, Folder, GitBranch, Code, Bug, Terminal, Star } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 
 interface Hint {
@@ -16,6 +16,7 @@ interface HintCategory {
 }
 
 const iconMap: Record<string, React.ReactNode> = {
+  star: <Star size={16} />,
   rocket: <Rocket size={16} />,
   folder: <Folder size={16} />,
   'git-branch': <GitBranch size={16} />,

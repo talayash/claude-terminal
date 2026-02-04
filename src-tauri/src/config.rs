@@ -29,6 +29,62 @@ pub struct Hint {
 pub fn get_default_hints() -> Vec<HintCategory> {
     vec![
         HintCategory {
+            name: "Top 10 Commands".to_string(),
+            icon: "star".to_string(),
+            hints: vec![
+                Hint {
+                    title: "Fix this error".to_string(),
+                    command: "Fix this error: [paste error]".to_string(),
+                    description: "Quickly fix any error by pasting it".to_string(),
+                },
+                Hint {
+                    title: "Explain this code".to_string(),
+                    command: "Explain what this code does: [paste code]".to_string(),
+                    description: "Get a clear explanation of any code".to_string(),
+                },
+                Hint {
+                    title: "Write tests".to_string(),
+                    command: "Write unit tests for [filename]".to_string(),
+                    description: "Generate comprehensive tests".to_string(),
+                },
+                Hint {
+                    title: "Refactor this".to_string(),
+                    command: "Refactor this code to be cleaner: [paste code]".to_string(),
+                    description: "Improve code quality and readability".to_string(),
+                },
+                Hint {
+                    title: "Add comments".to_string(),
+                    command: "Add documentation comments to [filename]".to_string(),
+                    description: "Document your code automatically".to_string(),
+                },
+                Hint {
+                    title: "Create component".to_string(),
+                    command: "Create a React component for [description]".to_string(),
+                    description: "Generate React/Vue/Angular components".to_string(),
+                },
+                Hint {
+                    title: "API endpoint".to_string(),
+                    command: "Create an API endpoint that [description]".to_string(),
+                    description: "Build REST/GraphQL endpoints".to_string(),
+                },
+                Hint {
+                    title: "Debug this".to_string(),
+                    command: "Help me debug why [describe issue]".to_string(),
+                    description: "Get help debugging tricky issues".to_string(),
+                },
+                Hint {
+                    title: "Optimize performance".to_string(),
+                    command: "Optimize the performance of [filename]".to_string(),
+                    description: "Make your code faster".to_string(),
+                },
+                Hint {
+                    title: "Convert format".to_string(),
+                    command: "Convert this [from format] to [to format]".to_string(),
+                    description: "Convert between file formats, languages".to_string(),
+                },
+            ],
+        },
+        HintCategory {
             name: "Getting Started".to_string(),
             icon: "rocket".to_string(),
             hints: vec![
@@ -46,6 +102,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     title: "Skip Permissions".to_string(),
                     command: "claude --dangerously-skip-permissions".to_string(),
                     description: "Skip permission prompts (use with caution)".to_string(),
+                },
+                Hint {
+                    title: "Resume Session".to_string(),
+                    command: "claude --resume".to_string(),
+                    description: "Continue from your last session".to_string(),
                 },
             ],
         },
@@ -68,6 +129,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     command: "Edit [filename] and [describe changes]".to_string(),
                     description: "Ask Claude to modify an existing file".to_string(),
                 },
+                Hint {
+                    title: "Find in Files".to_string(),
+                    command: "Find all files that contain [pattern]".to_string(),
+                    description: "Search across your codebase".to_string(),
+                },
             ],
         },
         HintCategory {
@@ -88,6 +154,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     title: "Create Branch".to_string(),
                     command: "Create a new branch called [name]".to_string(),
                     description: "Create and switch to a new branch".to_string(),
+                },
+                Hint {
+                    title: "Create PR".to_string(),
+                    command: "Create a pull request for these changes".to_string(),
+                    description: "Open a pull request on GitHub".to_string(),
                 },
             ],
         },
@@ -110,6 +181,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     command: "Write tests for [filename/function]".to_string(),
                     description: "Generate unit tests".to_string(),
                 },
+                Hint {
+                    title: "Add Types".to_string(),
+                    command: "Add TypeScript types to [filename]".to_string(),
+                    description: "Add type annotations to JavaScript".to_string(),
+                },
             ],
         },
         HintCategory {
@@ -130,6 +206,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     title: "Fix Issue".to_string(),
                     command: "Fix the [issue description] in [filename]".to_string(),
                     description: "Ask Claude to fix a specific problem".to_string(),
+                },
+                Hint {
+                    title: "Security Audit".to_string(),
+                    command: "Check [filename] for security vulnerabilities".to_string(),
+                    description: "Find potential security issues".to_string(),
                 },
             ],
         },
@@ -161,6 +242,11 @@ pub fn get_default_hints() -> Vec<HintCategory> {
                     title: "Allowed Tools".to_string(),
                     command: "--allowed-tools Read,Write,Bash".to_string(),
                     description: "Restrict available tools".to_string(),
+                },
+                Hint {
+                    title: "Print Cost".to_string(),
+                    command: "--print-cost".to_string(),
+                    description: "Show token usage and cost".to_string(),
                 },
             ],
         },

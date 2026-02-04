@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
 
@@ -9,6 +9,7 @@ export function SettingsModal() {
   const [claudeVersion, setClaudeVersion] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [updateMessage, setUpdateMessage] = useState<string>('');
 
   useEffect(() => {
     invoke<string>('get_claude_version').then(setClaudeVersion).catch(() => setClaudeVersion('Not installed'));
@@ -17,15 +18,22 @@ export function SettingsModal() {
   const handleUpdateClaude = async () => {
     setIsUpdating(true);
     setUpdateStatus('idle');
+    setUpdateMessage('Updating Claude Code...');
     try {
-      await invoke('update_claude_code');
+      const result = await invoke<string>('update_claude_code');
       const newVersion = await invoke<string>('get_claude_version');
       setClaudeVersion(newVersion);
       setUpdateStatus('success');
-    } catch {
+      setUpdateMessage(result);
+    } catch (error) {
       setUpdateStatus('error');
+      setUpdateMessage(String(error));
     }
     setIsUpdating(false);
+  };
+
+  const openDocs = async () => {
+    await invoke('open_external_url', { url: 'https://docs.anthropic.com/en/docs/claude-code' });
   };
 
   return (
@@ -55,33 +63,56 @@ export function SettingsModal() {
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 max-h-[70vh] overflow-y-auto">
           {/* Claude Code Version */}
           <div>
             <h3 className="text-text-primary font-medium mb-3">Claude Code</h3>
-            <div className="flex items-center justify-between bg-white/5 rounded-lg p-3">
-              <div>
-                <p className="text-text-primary text-sm">Current Version</p>
-                <p className="text-text-secondary text-xs">{claudeVersion}</p>
+            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-sm">Current Version</p>
+                  <p className="text-text-secondary text-xs">{claudeVersion || 'Checking...'}</p>
+                </div>
+                <div className="flex gap-2">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={openDocs}
+                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-text-primary py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                    Docs
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleUpdateClaude}
+                    disabled={isUpdating}
+                    className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/80 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+                  >
+                    {isUpdating ? (
+                      <RefreshCw size={16} className="animate-spin" />
+                    ) : updateStatus === 'success' ? (
+                      <CheckCircle size={16} />
+                    ) : updateStatus === 'error' ? (
+                      <AlertCircle size={16} />
+                    ) : (
+                      <Download size={16} />
+                    )}
+                    {isUpdating ? 'Updating...' : 'Update'}
+                  </motion.button>
+                </div>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleUpdateClaude}
-                disabled={isUpdating}
-                className="flex items-center gap-2 bg-accent-secondary hover:bg-accent-secondary/80 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
-              >
-                {isUpdating ? (
-                  <RefreshCw size={16} className="animate-spin" />
-                ) : updateStatus === 'success' ? (
-                  <CheckCircle size={16} className="text-success" />
-                ) : updateStatus === 'error' ? (
-                  <AlertCircle size={16} className="text-error" />
-                ) : (
-                  <Download size={16} />
-                )}
-                Update
-              </motion.button>
+
+              {updateMessage && (
+                <div className={`text-xs p-2 rounded ${
+                  updateStatus === 'success' ? 'bg-success/20 text-success' :
+                  updateStatus === 'error' ? 'bg-error/20 text-error' :
+                  'bg-white/10 text-text-secondary'
+                }`}>
+                  {updateMessage}
+                </div>
+              )}
             </div>
           </div>
 

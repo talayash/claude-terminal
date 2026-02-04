@@ -65,11 +65,17 @@ impl TerminalManager {
             })
             .map_err(|e| e.to_string())?;
 
-        let mut cmd = CommandBuilder::new("claude");
-
-        for arg in &claude_args {
-            cmd.arg(arg);
+        // Use PowerShell on Windows for better compatibility
+        #[cfg(target_os = "windows")]
+        let mut cmd = CommandBuilder::new("powershell.exe");
+        #[cfg(target_os = "windows")]
+        {
+            cmd.arg("-NoLogo");
+            cmd.arg("-NoExit");
         }
+
+        #[cfg(not(target_os = "windows"))]
+        let mut cmd = CommandBuilder::new("bash");
 
         cmd.cwd(&working_directory);
 
@@ -85,7 +91,7 @@ impl TerminalManager {
             label,
             profile_id: None,
             working_directory,
-            claude_args,
+            claude_args: claude_args.clone(),
             env_vars,
             created_at: Utc::now(),
             status: TerminalStatus::Running,
@@ -93,7 +99,19 @@ impl TerminalManager {
         };
 
         let mut reader = pty_pair.master.try_clone_reader().map_err(|e| e.to_string())?;
-        let writer = pty_pair.master.take_writer().map_err(|e| e.to_string())?;
+        let mut writer = pty_pair.master.take_writer().map_err(|e| e.to_string())?;
+
+        // If claude_args is not empty or we want to auto-start claude, send the command
+        // Build the claude command
+        let claude_cmd = if claude_args.is_empty() {
+            "claude\r\n".to_string()
+        } else {
+            format!("claude {}\r\n", claude_args.join(" "))
+        };
+
+        // Send claude command to start Claude Code automatically
+        let _ = writer.write_all(claude_cmd.as_bytes());
+        let _ = writer.flush();
 
         let terminal_id = id.clone();
         std::thread::spawn(move || {
