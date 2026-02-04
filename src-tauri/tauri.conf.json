@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ClaudeTerminal",
+  "version": "1.0.0",
+  "identifier": "com.claudeterminal.desktop",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "ClaudeTerminal",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 600,
+        "decorations": false,
+        "transparent": true,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": ["icons/icon.png", "icons/icon.ico"],
+    "resources": [],
+    "copyright": "Copyright 2024 ClaudeTerminal",
+    "shortDescription": "Multi-Instance Claude Code Terminal Manager",
+    "longDescription": "ClaudeTerminal is a modern Windows desktop application for managing multiple Claude Code terminal instances. Features include multi-terminal management, configuration profiles, command hints, and a beautiful glassmorphic interface.",
+    "category": "DeveloperTool",
+    "publisher": "ClaudeTerminal",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "headerImage": "icons/icon.png",
+        "sidebarImage": "icons/icon.png",
+        "installMode": "currentUser",
+        "languages": ["English"],
+        "displayLanguageSelector": false,
+        "compression": "lzma"
+      },
+      "wix": {
+        "language": "en-US",
+        "upgradeCode": "d8f3b5a2-1c4e-4a9f-b7d6-3e8c2f1a0b9d"
+      }
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": true,
+      "scope": []
+    }
+  }
+}
