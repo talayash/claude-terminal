@@ -19,7 +19,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/version-1.0.0-green?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.2.0-green?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Tauri-2.x-purple?style=flat-square" alt="Tauri">
   <img src="https://img.shields.io/badge/React-18-blue?style=flat-square" alt="React">
@@ -41,7 +41,15 @@
 - Create, manage, and monitor multiple Claude Code instances simultaneously
 - Tab-based interface with drag-and-drop reordering
 - Color-coded terminals for easy identification
+- **Custom nicknames** for easy terminal identification
 - Session state persistence across restarts
+
+### 📐 Smart Grid View
+- View up to **8 terminals simultaneously** in a single window
+- Intelligent auto-layout (1x1, 1x2, 2x2, 2x3, 2x4, etc.)
+- Click to focus, keyboard navigation with arrow keys
+- Quick add/remove terminals from grid via context menu
+- Toggle grid mode with `Ctrl+G`
 
 ### 🎨 Modern UI/UX
 - Beautiful dark glassmorphic design
@@ -67,6 +75,12 @@
 - One-click Claude Code installation
 - System status monitoring
 
+### 🔄 Auto-Updates
+- Automatic update checks on startup
+- Background download with progress indicator
+- One-click update installation
+- Manual update check in Settings
+
 ### ⌨️ Productivity Features
 - Comprehensive keyboard shortcuts
 - Search and filter terminals
@@ -91,8 +105,8 @@ Download the latest release for Windows:
 
 | Installer Type | Description |
 |---------------|-------------|
-| [ClaudeTerminal_1.0.0_x64-setup.exe](releases/) | NSIS Installer (Recommended) |
-| [ClaudeTerminal_1.0.0_x64_en-US.msi](releases/) | MSI Installer |
+| [ClaudeTerminal_1.2.0_x64-setup.exe](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.2.0_x64-setup.exe) | NSIS Installer (Recommended) |
+| [ClaudeTerminal_1.2.0_x64_en-US.msi](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.2.0_x64_en-US.msi) | MSI Installer |
 
 ### First Launch
 
@@ -105,9 +119,12 @@ Download the latest release for Windows:
 
 ### Creating a Terminal
 
-1. Click the **"New Terminal"** button in the sidebar, or
-2. Press `Ctrl+Shift+N`, or
-3. Click the **+** button in the tab bar
+1. Click the **"New Terminal"** button in the sidebar, or press `Ctrl+Shift+N`
+2. Select a **profile** from the dropdown (or use Default)
+3. Optionally set a **nickname** for easy identification
+4. Choose the **working directory** for the session
+5. Configure **Claude arguments** (e.g., `--dangerously-skip-permissions`)
+6. Click **Create Terminal** - Claude Code starts automatically!
 
 ### Managing Terminals
 
@@ -144,6 +161,9 @@ Press `F1` or click the lightbulb icon to open the Hints panel:
 | `Ctrl+,` | Open Settings |
 | `Ctrl+Tab` | Next Terminal |
 | `Ctrl+Shift+Tab` | Previous Terminal |
+| `Ctrl+G` | Toggle Grid View |
+| `Ctrl+Shift+G` | Add Current Terminal to Grid |
+| `Arrow Keys` | Navigate Grid (when in grid mode) |
 
 ## Building from Source
 
@@ -157,7 +177,7 @@ Press `F1` or click the lightbulb icon to open the Hints panel:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/claude-terminal.git
+   git clone https://github.com/talayash/claude-terminal.git
    cd claude-terminal
    ```
 
