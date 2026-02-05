@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store/appStore';
 import { useTerminalStore } from '../store/terminalStore';
-import { homeDir } from '@tauri-apps/api/path';
 
 export function useKeyboardShortcuts() {
-  const { toggleSidebar, toggleHints, openSettings } = useAppStore();
-  const { terminals, activeTerminalId, setActiveTerminal, createTerminal, closeTerminal } = useTerminalStore();
+  const { toggleSidebar, toggleHints, openSettings, openNewTerminalModal } = useAppStore();
+  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal } = useTerminalStore();
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -14,8 +13,7 @@ export function useKeyboardShortcuts() {
 
       if (ctrl && shift && e.key === 'N') {
         e.preventDefault();
-        const home = await homeDir();
-        await createTerminal(`Terminal ${terminals.size + 1}`, home, [], {});
+        openNewTerminalModal();
       }
 
       if (ctrl && e.key === 'b') {
@@ -53,5 +51,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [terminals, activeTerminalId, toggleSidebar, toggleHints, openSettings, setActiveTerminal, createTerminal, closeTerminal]);
+  }, [terminals, activeTerminalId, toggleSidebar, toggleHints, openSettings, openNewTerminalModal, setActiveTerminal, closeTerminal]);
 }

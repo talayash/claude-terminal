@@ -20,6 +20,7 @@ fn main() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let db = database::Database::new()?;
             let terminal_manager = terminal::TerminalManager::new();
@@ -38,6 +39,7 @@ fn main() {
             commands::close_terminal,
             commands::get_terminals,
             commands::update_terminal_label,
+            commands::update_terminal_nickname,
             commands::save_profile,
             commands::get_profiles,
             commands::delete_profile,

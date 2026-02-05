@@ -1,16 +1,16 @@
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Plus } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
+import { useAppStore } from '../store/appStore';
 import { TerminalView } from './TerminalView';
-import { homeDir } from '@tauri-apps/api/path';
 
 export function TerminalTabs() {
-  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, createTerminal } = useTerminalStore();
+  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal } = useTerminalStore();
+  const { openNewTerminalModal } = useAppStore();
   const terminalList = Array.from(terminals.values()).map(t => t.config);
 
-  const handleNewTab = async () => {
-    const home = await homeDir();
-    await createTerminal(`Terminal ${terminals.size + 1}`, home, [], {});
+  const handleNewTab = () => {
+    openNewTerminalModal();
   };
 
   return (
@@ -39,7 +39,7 @@ export function TerminalTabs() {
                 }`}
               >
                 <div className={`w-1.5 h-1.5 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
-                <span className="max-w-[120px] truncate">{terminal.label}</span>
+                <span className="max-w-[120px] truncate">{terminal.nickname || terminal.label}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

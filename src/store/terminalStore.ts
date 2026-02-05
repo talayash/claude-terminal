@@ -5,6 +5,7 @@ import { Terminal } from '@xterm/xterm';
 export interface TerminalConfig {
   id: string;
   label: string;
+  nickname: string | null;
   profile_id: string | null;
   working_directory: string;
   claude_args: string[];
@@ -28,11 +29,13 @@ interface TerminalState {
     workingDirectory: string,
     claudeArgs: string[],
     envVars: Record<string, string>,
-    colorTag?: string
+    colorTag?: string,
+    nickname?: string
   ) => Promise<string>;
   closeTerminal: (id: string) => Promise<void>;
   setActiveTerminal: (id: string) => void;
   updateLabel: (id: string, label: string) => Promise<void>;
+  updateNickname: (id: string, nickname: string) => Promise<void>;
   writeToTerminal: (id: string, data: string) => Promise<void>;
   resizeTerminal: (id: string, cols: number, rows: number) => Promise<void>;
   setXterm: (id: string, xterm: Terminal) => void;
@@ -44,9 +47,9 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   terminals: new Map(),
   activeTerminalId: null,
 
-  createTerminal: async (label, workingDirectory, claudeArgs, envVars, colorTag) => {
+  createTerminal: async (label, workingDirectory, claudeArgs, envVars, colorTag, nickname) => {
     try {
-      console.log('Creating terminal with:', { label, workingDirectory, claudeArgs, envVars, colorTag });
+      console.log('Creating terminal with:', { label, workingDirectory, claudeArgs, envVars, colorTag, nickname });
       const config = await invoke<TerminalConfig>('create_terminal', {
         request: {
           label,
@@ -54,6 +57,7 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
           claude_args: claudeArgs,
           env_vars: envVars,
           color_tag: colorTag || null,
+          nickname: nickname || null,
         },
       });
       console.log('Terminal created:', config);
@@ -105,6 +109,19 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       const instance = newTerminals.get(id);
       if (instance) {
         instance.config.label = label;
+      }
+      return { terminals: newTerminals };
+    });
+  },
+
+  updateNickname: async (id, nickname) => {
+    await invoke('update_terminal_nickname', { id, nickname });
+
+    set((state) => {
+      const newTerminals = new Map(state.terminals);
+      const instance = newTerminals.get(id);
+      if (instance) {
+        instance.config.nickname = nickname;
       }
       return { terminals: newTerminals };
     });

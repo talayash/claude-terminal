@@ -12,6 +12,7 @@ pub struct CreateTerminalRequest {
     pub claude_args: Vec<String>,
     pub env_vars: HashMap<String, String>,
     pub color_tag: Option<String>,
+    pub nickname: Option<String>,
 }
 
 #[command]
@@ -30,6 +31,7 @@ pub async fn create_terminal(
             request.claude_args,
             request.env_vars,
             request.color_tag,
+            request.nickname,
             tx,
         )?
     };
@@ -90,6 +92,16 @@ pub async fn update_terminal_label(
 ) -> Result<(), String> {
     let mut terminals = state.terminals.lock().await;
     terminals.update_label(&id, label)
+}
+
+#[command]
+pub async fn update_terminal_nickname(
+    state: State<'_, AppState>,
+    id: String,
+    nickname: String,
+) -> Result<(), String> {
+    let mut terminals = state.terminals.lock().await;
+    terminals.update_nickname(&id, nickname)
 }
 
 #[command]

@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, MoreVertical, Copy, Trash2, Edit3 } from 'lucide-react';
+import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
-import { homeDir } from '@tauri-apps/api/path';
 
 const STATUS_COLORS = {
   Running: 'bg-success',
@@ -12,48 +11,35 @@ const STATUS_COLORS = {
   Stopped: 'bg-text-secondary',
 };
 
-const TAG_COLORS = [
-  'bg-red-500',
-  'bg-orange-500',
-  'bg-yellow-500',
-  'bg-green-500',
-  'bg-blue-500',
-  'bg-purple-500',
-  'bg-pink-500',
-];
-
 export function Sidebar() {
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNicknameId, setEditingNicknameId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
-  const { terminals, activeTerminalId, setActiveTerminal, createTerminal, closeTerminal, updateLabel } = useTerminalStore();
-  const { openProfileModal } = useAppStore();
+  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname } = useTerminalStore();
+  const { openProfileModal, openNewTerminalModal } = useAppStore();
 
   const terminalList = Array.from(terminals.values())
     .map(t => t.config)
-    .filter(t => t.label.toLowerCase().includes(search.toLowerCase()));
+    .filter(t => {
+      const searchLower = search.toLowerCase();
+      return t.label.toLowerCase().includes(searchLower) ||
+        (t.nickname && t.nickname.toLowerCase().includes(searchLower));
+    });
 
-  const handleNewTerminal = async () => {
-    try {
-      const home = await homeDir();
-      console.log('Creating new terminal in:', home);
-      await createTerminal(
-        `Terminal ${terminals.size + 1}`,
-        home,
-        [],
-        {},
-        TAG_COLORS[terminals.size % TAG_COLORS.length]
-      );
-    } catch (error) {
-      console.error('Failed to create terminal:', error);
-      alert('Failed to create terminal: ' + String(error));
-    }
+  const handleNewTerminal = () => {
+    openNewTerminalModal();
   };
 
   const handleRename = async (id: string, newLabel: string) => {
     await updateLabel(id, newLabel);
     setEditingId(null);
+  };
+
+  const handleNicknameChange = async (id: string, newNickname: string) => {
+    await updateNickname(id, newNickname);
+    setEditingNicknameId(null);
   };
 
   return (
@@ -108,7 +94,7 @@ export function Sidebar() {
                   terminal.status === 'Running' ? 'animate-pulse' : ''
                 }`} />
 
-                {/* Label */}
+                {/* Label & Nickname */}
                 <div className="flex-1 min-w-0">
                   {editingId === terminal.id ? (
                     <input
@@ -122,9 +108,27 @@ export function Sidebar() {
                       className="w-full bg-transparent border-b border-accent-primary text-text-primary text-sm focus:outline-none"
                       onClick={(e) => e.stopPropagation()}
                     />
+                  ) : editingNicknameId === terminal.id ? (
+                    <input
+                      autoFocus
+                      defaultValue={terminal.nickname || ''}
+                      placeholder="Enter nickname..."
+                      onBlur={(e) => handleNicknameChange(terminal.id, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleNicknameChange(terminal.id, e.currentTarget.value);
+                        if (e.key === 'Escape') setEditingNicknameId(null);
+                      }}
+                      className="w-full bg-transparent border-b border-accent-primary text-text-primary text-sm focus:outline-none"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   ) : (
                     <>
-                      <p className="text-text-primary text-sm font-medium truncate">{terminal.label}</p>
+                      {terminal.nickname && (
+                        <p className="text-accent-primary text-sm font-semibold truncate">{terminal.nickname}</p>
+                      )}
+                      <p className={`text-text-primary text-sm ${terminal.nickname ? 'text-xs text-text-secondary' : 'font-medium'} truncate`}>
+                        {terminal.label}
+                      </p>
                       <p className="text-text-secondary text-xs truncate">{terminal.working_directory}</p>
                     </>
                   )}
@@ -150,6 +154,16 @@ export function Sidebar() {
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-lg shadow-xl py-1 min-w-[140px] z-50"
                       >
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingNicknameId(terminal.id);
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                        >
+                          <Tag size={14} /> Set Nickname
+                        </button>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

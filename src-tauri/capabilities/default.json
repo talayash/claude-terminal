@@ -16,6 +16,7 @@
     "shell:allow-open",
     "process:default",
     "store:default",
-    "opener:default"
+    "opener:default",
+    "dialog:default"
   ]
 }

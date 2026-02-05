@@ -10,6 +10,7 @@ use chrono::{DateTime, Utc};
 pub struct TerminalConfig {
     pub id: String,
     pub label: String,
+    pub nickname: Option<String>,
     pub profile_id: Option<String>,
     pub working_directory: String,
     pub claude_args: Vec<String>,
@@ -52,6 +53,7 @@ impl TerminalManager {
         claude_args: Vec<String>,
         env_vars: HashMap<String, String>,
         color_tag: Option<String>,
+        nickname: Option<String>,
         tx: mpsc::Sender<(String, Vec<u8>)>,
     ) -> Result<TerminalConfig, String> {
         let pty_system = native_pty_system();
@@ -90,6 +92,7 @@ impl TerminalManager {
         let config = TerminalConfig {
             id: id.clone(),
             label,
+            nickname,
             profile_id: None,
             working_directory,
             claude_args: claude_args.clone(),
@@ -184,6 +187,15 @@ impl TerminalManager {
     pub fn update_label(&mut self, id: &str, label: String) -> Result<(), String> {
         if let Some(terminal) = self.terminals.get_mut(id) {
             terminal.config.label = label;
+            Ok(())
+        } else {
+            Err("Terminal not found".to_string())
+        }
+    }
+
+    pub fn update_nickname(&mut self, id: &str, nickname: String) -> Result<(), String> {
+        if let Some(terminal) = self.terminals.get_mut(id) {
+            terminal.config.nickname = Some(nickname);
             Ok(())
         } else {
             Err("Terminal not found".to_string())

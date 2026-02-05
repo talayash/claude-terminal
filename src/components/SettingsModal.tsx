@@ -5,11 +5,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
 
 export function SettingsModal() {
-  const { closeSettings } = useAppStore();
+  const { closeSettings, defaultClaudeArgs, setDefaultClaudeArgs } = useAppStore();
   const [claudeVersion, setClaudeVersion] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [updateMessage, setUpdateMessage] = useState<string>('');
+  const [argsText, setArgsText] = useState(defaultClaudeArgs.join('\n'));
 
   useEffect(() => {
     invoke<string>('get_claude_version').then(setClaudeVersion).catch(() => setClaudeVersion('Not installed'));
@@ -113,6 +114,26 @@ export function SettingsModal() {
                   {updateMessage}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Default Claude Arguments */}
+          <div>
+            <h3 className="text-text-primary font-medium mb-3">Default Claude Arguments</h3>
+            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+              <p className="text-text-secondary text-xs">
+                These arguments will be pre-filled when creating a new terminal. One argument per line.
+              </p>
+              <textarea
+                value={argsText}
+                onChange={(e) => setArgsText(e.target.value)}
+                onBlur={() => setDefaultClaudeArgs(argsText.split('\n').filter(Boolean))}
+                className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50 font-mono h-24 resize-none"
+                placeholder="--dangerously-skip-permissions&#10;--model opus"
+              />
+              <p className="text-text-secondary text-xs">
+                Command: <code className="text-accent-primary">claude {argsText.split('\n').filter(Boolean).join(' ')}</code>
+              </p>
             </div>
           </div>
 

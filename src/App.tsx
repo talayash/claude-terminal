@@ -6,6 +6,7 @@ import { TerminalTabs } from './components/TerminalTabs';
 import { HintsPanel } from './components/HintsPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { ProfileModal } from './components/ProfileModal';
+import { NewTerminalModal } from './components/NewTerminalModal';
 import { SetupWizard } from './components/SetupWizard';
 import { useAppStore } from './store/appStore';
 import { useTerminalStore } from './store/terminalStore';
@@ -23,7 +24,7 @@ interface SystemStatus {
 }
 
 function App() {
-  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen } = useAppStore();
+  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen } = useAppStore();
   const { handleTerminalOutput } = useTerminalStore();
   const [showSetup, setShowSetup] = useState<boolean | null>(null);
 
@@ -110,6 +111,7 @@ function App() {
           <AnimatePresence>
             {settingsOpen && <SettingsModal />}
             {profileModalOpen && <ProfileModal />}
+            {newTerminalModalOpen && <NewTerminalModal />}
           </AnimatePresence>
         </>
       )}
