@@ -127,8 +127,9 @@ pub async fn delete_profile(state: State<'_, AppState>, id: String) -> Result<()
 
 #[command]
 pub async fn get_claude_version() -> Result<String, String> {
-    let output = std::process::Command::new("claude")
-        .arg("--version")
+    // Use cmd.exe /C on Windows
+    let output = std::process::Command::new("cmd")
+        .args(["/C", "claude", "--version"])
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -137,17 +138,73 @@ pub async fn get_claude_version() -> Result<String, String> {
         .map_err(|e| e.to_string())
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateCheckResult {
+    pub current_version: String,
+    pub latest_version: String,
+    pub update_available: bool,
+}
+
+#[command]
+pub async fn check_claude_update() -> Result<UpdateCheckResult, String> {
+    // Get current version
+    let current_output = std::process::Command::new("cmd")
+        .args(["/C", "claude", "--version"])
+        .output()
+        .map_err(|e| format!("Failed to get current version: {}", e))?;
+
+    let current_version = String::from_utf8_lossy(&current_output.stdout)
+        .trim()
+        .to_string();
+
+    if current_version.is_empty() {
+        return Err("Claude Code is not installed".to_string());
+    }
+
+    // Get latest version from npm
+    let npm_output = std::process::Command::new("cmd")
+        .args(["/C", "npm", "view", "@anthropic-ai/claude-code", "version"])
+        .output()
+        .map_err(|e| format!("Failed to check latest version: {}", e))?;
+
+    let latest_version = String::from_utf8_lossy(&npm_output.stdout)
+        .trim()
+        .to_string();
+
+    if latest_version.is_empty() {
+        return Err("Failed to fetch latest version from npm".to_string());
+    }
+
+    // Extract version number from current version string (e.g., "1.0.17 (Claude Code)" -> "1.0.17")
+    let current_ver_clean = current_version
+        .split_whitespace()
+        .next()
+        .unwrap_or(&current_version)
+        .to_string();
+
+    let update_available = current_ver_clean != latest_version;
+
+    Ok(UpdateCheckResult {
+        current_version,
+        latest_version,
+        update_available,
+    })
+}
+
 #[command]
 pub async fn update_claude_code() -> Result<String, String> {
-    let output = std::process::Command::new("npm")
-        .args(["update", "-g", "@anthropic-ai/claude-code"])
+    // Use cmd.exe /C on Windows to run npm
+    let output = std::process::Command::new("cmd")
+        .args(["/C", "npm", "install", "-g", "@anthropic-ai/claude-code@latest"])
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Failed to run npm: {}", e))?;
 
     if output.status.success() {
-        Ok("Claude Code updated successfully".to_string())
+        Ok("Claude Code updated successfully!".to_string())
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        Err(format!("{}{}", stderr, stdout))
     }
 }
 

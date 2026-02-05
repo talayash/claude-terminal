@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag } from 'lucide-react';
+import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3 } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
 
@@ -18,7 +18,7 @@ export function Sidebar() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname } = useTerminalStore();
-  const { openProfileModal, openNewTerminalModal } = useAppStore();
+  const { openProfileModal, openNewTerminalModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
 
   const terminalList = Array.from(terminals.values())
     .map(t => t.config)
@@ -86,8 +86,15 @@ export function Sidebar() {
               }`}
             >
               <div className="flex items-center gap-3">
-                {/* Color Tag */}
-                <div className={`w-1 h-8 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
+                {/* Color Tag & Grid Indicator */}
+                <div className="relative">
+                  <div className={`w-1 h-8 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
+                  {gridTerminalIds.includes(terminal.id) && (
+                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent-primary rounded-full flex items-center justify-center">
+                      <Grid3X3 size={6} className="text-white" />
+                    </div>
+                  )}
+                </div>
 
                 {/* Status Indicator */}
                 <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[terminal.status]} ${
@@ -154,6 +161,30 @@ export function Sidebar() {
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-lg shadow-xl py-1 min-w-[140px] z-50"
                       >
+                        {gridTerminalIds.includes(terminal.id) ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromGrid(terminal.id);
+                              setMenuOpenId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-accent-primary hover:bg-accent-primary/10"
+                          >
+                            <Grid3X3 size={14} /> Remove from Grid
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToGrid(terminal.id);
+                              setGridMode(true);
+                              setMenuOpenId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                          >
+                            <Grid3X3 size={14} /> Add to Grid
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

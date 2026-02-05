@@ -3,7 +3,7 @@ import { useAppStore } from '../store/appStore';
 import { useTerminalStore } from '../store/terminalStore';
 
 export function useKeyboardShortcuts() {
-  const { toggleSidebar, toggleHints, openSettings, openNewTerminalModal } = useAppStore();
+  const { toggleSidebar, toggleHints, openSettings, openNewTerminalModal, toggleGridMode, addToGrid, gridMode } = useAppStore();
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal } = useTerminalStore();
 
   useEffect(() => {
@@ -36,6 +36,21 @@ export function useKeyboardShortcuts() {
         toggleHints();
       }
 
+      // Toggle Grid Mode: Ctrl+G
+      if (ctrl && e.key === 'g') {
+        e.preventDefault();
+        toggleGridMode();
+      }
+
+      // Add current terminal to grid: Ctrl+Shift+G
+      if (ctrl && shift && e.key === 'G') {
+        e.preventDefault();
+        if (activeTerminalId) {
+          addToGrid(activeTerminalId);
+          if (!gridMode) toggleGridMode();
+        }
+      }
+
       if (ctrl && e.key === 'Tab') {
         e.preventDefault();
         const terminalIds = Array.from(terminals.keys());
@@ -51,5 +66,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [terminals, activeTerminalId, toggleSidebar, toggleHints, openSettings, openNewTerminalModal, setActiveTerminal, closeTerminal]);
+  }, [terminals, activeTerminalId, toggleSidebar, toggleHints, openSettings, openNewTerminalModal, setActiveTerminal, closeTerminal, toggleGridMode, addToGrid, gridMode]);
 }
