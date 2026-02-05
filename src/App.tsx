@@ -8,6 +8,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NewTerminalModal } from './components/NewTerminalModal';
 import { SetupWizard } from './components/SetupWizard';
+import { AutoUpdater } from './components/AutoUpdater';
 import { useAppStore } from './store/appStore';
 import { useTerminalStore } from './store/terminalStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -72,6 +73,7 @@ function App() {
 
       {!showSetup && (
         <>
+          <AutoUpdater />
           <TitleBar />
 
           <div className="flex-1 flex overflow-hidden">

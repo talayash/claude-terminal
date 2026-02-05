@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check } from 'lucide-react';
+import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check, Rocket } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
+import { useAutoUpdater } from './AutoUpdater';
 
 interface UpdateCheckResult {
   current_version: string;
@@ -20,6 +21,9 @@ export function SettingsModal() {
   const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error' | 'uptodate'>('idle');
   const [updateMessage, setUpdateMessage] = useState<string>('');
   const [argsText, setArgsText] = useState(defaultClaudeArgs.join('\n'));
+
+  // App auto-updater
+  const appUpdater = useAutoUpdater();
 
   useEffect(() => {
     checkForUpdates();
@@ -106,6 +110,91 @@ export function SettingsModal() {
 
         {/* Content */}
         <div className="p-4 space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* App Updates */}
+          <div>
+            <h3 className="text-text-primary font-medium mb-3">App Updates</h3>
+            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-sm">ClaudeTerminal</p>
+                  <p className="text-text-secondary text-xs">v1.1.0</p>
+                  {appUpdater.status === 'available' && appUpdater.updateInfo && (
+                    <p className="text-accent-primary text-xs mt-1">
+                      Update available: v{appUpdater.updateInfo.version}
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {appUpdater.status === 'up-to-date' ? (
+                    <div className="flex items-center gap-2 bg-success/20 text-success py-2 px-4 rounded-lg text-sm font-medium">
+                      <Check size={16} />
+                      Up to date
+                    </div>
+                  ) : appUpdater.status === 'ready' ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={appUpdater.restart}
+                      className="flex items-center gap-2 bg-success hover:bg-success/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <Rocket size={16} />
+                      Restart to Update
+                    </motion.button>
+                  ) : appUpdater.status === 'downloading' ? (
+                    <div className="flex items-center gap-2 bg-white/10 text-text-primary py-2 px-4 rounded-lg text-sm font-medium">
+                      <RefreshCw size={16} className="animate-spin" />
+                      {appUpdater.downloadProgress}%
+                    </div>
+                  ) : appUpdater.status === 'available' ? (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={appUpdater.downloadAndInstall}
+                      className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      <Download size={16} />
+                      Download Update
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={appUpdater.checkForUpdates}
+                      disabled={appUpdater.status === 'checking'}
+                      className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-text-primary py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+                    >
+                      {appUpdater.status === 'checking' ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : (
+                        <RefreshCw size={16} />
+                      )}
+                      Check for Updates
+                    </motion.button>
+                  )}
+                </div>
+              </div>
+
+              {appUpdater.status === 'downloading' && (
+                <div className="space-y-1">
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-accent-primary"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${appUpdater.downloadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-text-secondary text-xs">Downloading update...</p>
+                </div>
+              )}
+
+              {appUpdater.error && (
+                <div className="text-xs p-2 rounded bg-error/20 text-error">
+                  {appUpdater.error}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Claude Code Version */}
           <div>
             <h3 className="text-text-primary font-medium mb-3">Claude Code</h3>
@@ -238,7 +327,7 @@ export function SettingsModal() {
           <div>
             <h3 className="text-text-primary font-medium mb-3">About</h3>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.1.0</p>
+              <p className="text-text-primary text-sm">ClaudeTerminal v1.2.0</p>
               <p className="text-text-secondary text-xs mt-1">
                 A modern terminal manager for Claude Code
               </p>
