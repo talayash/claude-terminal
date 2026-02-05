@@ -44,6 +44,7 @@ fn main() {
             commands::get_profiles,
             commands::delete_profile,
             commands::get_claude_version,
+            commands::check_claude_update,
             commands::update_claude_code,
             commands::get_hints,
             commands::save_workspace,

@@ -1,31 +1,72 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
+
+interface UpdateCheckResult {
+  current_version: string;
+  latest_version: string;
+  update_available: boolean;
+}
 
 export function SettingsModal() {
   const { closeSettings, defaultClaudeArgs, setDefaultClaudeArgs } = useAppStore();
   const [claudeVersion, setClaudeVersion] = useState<string>('');
+  const [latestVersion, setLatestVersion] = useState<string>('');
+  const [updateAvailable, setUpdateAvailable] = useState<boolean | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [updateStatus, setUpdateStatus] = useState<'idle' | 'success' | 'error' | 'uptodate'>('idle');
   const [updateMessage, setUpdateMessage] = useState<string>('');
   const [argsText, setArgsText] = useState(defaultClaudeArgs.join('\n'));
 
   useEffect(() => {
-    invoke<string>('get_claude_version').then(setClaudeVersion).catch(() => setClaudeVersion('Not installed'));
+    checkForUpdates();
   }, []);
 
+  const checkForUpdates = async () => {
+    setIsChecking(true);
+    setUpdateStatus('idle');
+    setUpdateMessage('');
+    try {
+      const result = await invoke<UpdateCheckResult>('check_claude_update');
+      setClaudeVersion(result.current_version);
+      setLatestVersion(result.latest_version);
+      setUpdateAvailable(result.update_available);
+      if (!result.update_available) {
+        setUpdateStatus('uptodate');
+        setUpdateMessage('You have the latest version!');
+      }
+    } catch (error) {
+      // Fallback to just getting version
+      try {
+        const version = await invoke<string>('get_claude_version');
+        setClaudeVersion(version || 'Not installed');
+      } catch {
+        setClaudeVersion('Not installed');
+      }
+      setUpdateAvailable(null);
+    }
+    setIsChecking(false);
+  };
+
   const handleUpdateClaude = async () => {
+    if (updateAvailable === false) {
+      setUpdateStatus('uptodate');
+      setUpdateMessage('You already have the latest version!');
+      return;
+    }
+
     setIsUpdating(true);
     setUpdateStatus('idle');
     setUpdateMessage('Updating Claude Code...');
     try {
       const result = await invoke<string>('update_claude_code');
-      const newVersion = await invoke<string>('get_claude_version');
-      setClaudeVersion(newVersion);
       setUpdateStatus('success');
       setUpdateMessage(result);
+      // Re-check versions after update
+      await checkForUpdates();
     } catch (error) {
       setUpdateStatus('error');
       setUpdateMessage(String(error));
@@ -72,7 +113,14 @@ export function SettingsModal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-text-primary text-sm">Current Version</p>
-                  <p className="text-text-secondary text-xs">{claudeVersion || 'Checking...'}</p>
+                  <p className="text-text-secondary text-xs">
+                    {isChecking ? 'Checking...' : claudeVersion || 'Not installed'}
+                  </p>
+                  {latestVersion && updateAvailable && (
+                    <p className="text-accent-primary text-xs mt-1">
+                      Update available: v{latestVersion}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <motion.button
@@ -84,30 +132,44 @@ export function SettingsModal() {
                     <ExternalLink size={14} />
                     Docs
                   </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleUpdateClaude}
-                    disabled={isUpdating}
-                    className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/80 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
-                  >
-                    {isUpdating ? (
-                      <RefreshCw size={16} className="animate-spin" />
-                    ) : updateStatus === 'success' ? (
-                      <CheckCircle size={16} />
-                    ) : updateStatus === 'error' ? (
-                      <AlertCircle size={16} />
-                    ) : (
-                      <Download size={16} />
-                    )}
-                    {isUpdating ? 'Updating...' : 'Update'}
-                  </motion.button>
+                  {updateAvailable === false ? (
+                    <div className="flex items-center gap-2 bg-success/20 text-success py-2 px-4 rounded-lg text-sm font-medium">
+                      <Check size={16} />
+                      Up to date
+                    </div>
+                  ) : (
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleUpdateClaude}
+                      disabled={isUpdating || isChecking}
+                      className={`flex items-center gap-2 py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${
+                        updateAvailable
+                          ? 'bg-accent-primary hover:bg-accent-primary/80 text-white'
+                          : 'bg-white/10 hover:bg-white/20 text-text-primary'
+                      }`}
+                    >
+                      {isUpdating ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : isChecking ? (
+                        <RefreshCw size={16} className="animate-spin" />
+                      ) : updateStatus === 'success' ? (
+                        <CheckCircle size={16} />
+                      ) : updateStatus === 'error' ? (
+                        <AlertCircle size={16} />
+                      ) : (
+                        <Download size={16} />
+                      )}
+                      {isUpdating ? 'Updating...' : isChecking ? 'Checking...' : 'Update'}
+                    </motion.button>
+                  )}
                 </div>
               </div>
 
               {updateMessage && (
                 <div className={`text-xs p-2 rounded ${
                   updateStatus === 'success' ? 'bg-success/20 text-success' :
+                  updateStatus === 'uptodate' ? 'bg-success/20 text-success' :
                   updateStatus === 'error' ? 'bg-error/20 text-error' :
                   'bg-white/10 text-text-secondary'
                 }`}>
@@ -161,6 +223,14 @@ export function SettingsModal() {
                 <span className="text-text-secondary">Switch Tab</span>
                 <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Tab</kbd>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">Toggle Grid View</span>
+                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+G</kbd>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">Add to Grid</span>
+                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+G</kbd>
+              </div>
             </div>
           </div>
 
@@ -168,7 +238,7 @@ export function SettingsModal() {
           <div>
             <h3 className="text-text-primary font-medium mb-3">About</h3>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.0.0</p>
+              <p className="text-text-primary text-sm">ClaudeTerminal v1.1.0</p>
               <p className="text-text-secondary text-xs mt-1">
                 A modern terminal manager for Claude Code
               </p>
