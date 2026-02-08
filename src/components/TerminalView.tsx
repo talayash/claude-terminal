@@ -45,7 +45,8 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
       fontSize: 14,
       lineHeight: 1.2,
       cursorBlink: true,
-      cursorStyle: 'bar',
+      cursorStyle: 'block',
+      cursorWidth: 2,
       allowProposedApi: true,
     });
 
@@ -57,6 +58,32 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
 
     terminal.open(containerRef.current);
     fitAddon.fit();
+
+    // Handle Ctrl+C (copy) and Ctrl+V (paste) keyboard shortcuts
+    terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      const isCtrl = e.ctrlKey || e.metaKey;
+
+      if (isCtrl && e.key === 'c' && e.type === 'keydown') {
+        if (terminal.hasSelection()) {
+          navigator.clipboard.writeText(terminal.getSelection());
+          terminal.clearSelection();
+          return false; // Prevent xterm from sending \x03
+        }
+        // No selection — let xterm send interrupt signal (Ctrl+C)
+        return true;
+      }
+
+      if (isCtrl && e.key === 'v' && e.type === 'keydown') {
+        navigator.clipboard.readText().then((text) => {
+          if (text) {
+            writeToTerminal(terminalId, text);
+          }
+        });
+        return false; // Prevent default
+      }
+
+      return true;
+    });
 
     terminal.onData((data) => {
       writeToTerminal(terminalId, data);

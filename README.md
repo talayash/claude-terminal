@@ -19,7 +19,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/version-1.2.0-green?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.3.0-green?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Tauri-2.x-purple?style=flat-square" alt="Tauri">
   <img src="https://img.shields.io/badge/React-18-blue?style=flat-square" alt="React">
@@ -105,8 +105,8 @@ Download the latest release for Windows:
 
 | Installer Type | Description |
 |---------------|-------------|
-| [ClaudeTerminal_1.2.0_x64-setup.exe](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.2.0_x64-setup.exe) | NSIS Installer (Recommended) |
-| [ClaudeTerminal_1.2.0_x64_en-US.msi](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.2.0_x64_en-US.msi) | MSI Installer |
+| [ClaudeTerminal_1.3.0_x64-setup.exe](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.3.0_x64-setup.exe) | NSIS Installer (Recommended) |
+| [ClaudeTerminal_1.3.0_x64_en-US.msi](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.3.0_x64_en-US.msi) | MSI Installer |
 
 ### First Launch
 
@@ -163,6 +163,8 @@ Press `F1` or click the lightbulb icon to open the Hints panel:
 | `Ctrl+Shift+Tab` | Previous Terminal |
 | `Ctrl+G` | Toggle Grid View |
 | `Ctrl+Shift+G` | Add Current Terminal to Grid |
+| `Ctrl+C` | Copy selected text / Send interrupt signal |
+| `Ctrl+V` | Paste from clipboard |
 | `Arrow Keys` | Navigate Grid (when in grid mode) |
 
 ## Building from Source
