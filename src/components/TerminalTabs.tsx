@@ -6,7 +6,7 @@ import { TerminalView } from './TerminalView';
 import { TerminalGrid } from './TerminalGrid';
 
 export function TerminalTabs() {
-  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal } = useTerminalStore();
+  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, unreadTerminalIds } = useTerminalStore();
   const { openNewTerminalModal, gridMode, toggleGridMode, addToGrid, gridTerminalIds } = useAppStore();
   const terminalList = Array.from(terminals.values()).map(t => t.config);
 
@@ -52,7 +52,12 @@ export function TerminalTabs() {
                       : 'hover:bg-white/5 text-text-secondary'
                   }`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
+                  <div className="relative">
+                    <div className={`w-1.5 h-1.5 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
+                    {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
+                      <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-accent-primary animate-activity-pulse" />
+                    )}
+                  </div>
                   <span className="max-w-[120px] truncate">{terminal.nickname || terminal.label}</span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button

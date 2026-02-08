@@ -23,6 +23,7 @@ interface TerminalInstance {
 interface TerminalState {
   terminals: Map<string, TerminalInstance>;
   activeTerminalId: string | null;
+  unreadTerminalIds: Set<string>;
 
   createTerminal: (
     label: string,
@@ -41,11 +42,14 @@ interface TerminalState {
   setXterm: (id: string, xterm: Terminal) => void;
   handleTerminalOutput: (id: string, data: Uint8Array) => void;
   getTerminalList: () => TerminalConfig[];
+  clearUnread: (id: string) => void;
+  hasUnread: (id: string) => boolean;
 }
 
 export const useTerminalStore = create<TerminalState>((set, get) => ({
   terminals: new Map(),
   activeTerminalId: null,
+  unreadTerminalIds: new Set(),
 
   createTerminal: async (label, workingDirectory, claudeArgs, envVars, colorTag, nickname) => {
     try {
@@ -89,9 +93,13 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       }
       newTerminals.delete(id);
 
+      const newUnread = new Set(state.unreadTerminalIds);
+      newUnread.delete(id);
+
       const remainingIds = Array.from(newTerminals.keys());
       return {
         terminals: newTerminals,
+        unreadTerminalIds: newUnread,
         activeTerminalId: state.activeTerminalId === id
           ? (remainingIds[0] || null)
           : state.activeTerminalId,
@@ -99,7 +107,11 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
     });
   },
 
-  setActiveTerminal: (id) => set({ activeTerminalId: id }),
+  setActiveTerminal: (id) => set((state) => {
+    const newUnread = new Set(state.unreadTerminalIds);
+    newUnread.delete(id);
+    return { activeTerminalId: id, unreadTerminalIds: newUnread };
+  }),
 
   updateLabel: async (id, label) => {
     await invoke('update_terminal_label', { id, label });
@@ -148,15 +160,32 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
   },
 
   handleTerminalOutput: (id, data) => {
-    const { terminals } = get();
+    const { terminals, activeTerminalId } = get();
     const instance = terminals.get(id);
     if (instance?.xterm) {
       instance.xterm.write(data);
+    }
+    if (id !== activeTerminalId) {
+      set((state) => {
+        const newUnread = new Set(state.unreadTerminalIds);
+        newUnread.add(id);
+        return { unreadTerminalIds: newUnread };
+      });
     }
   },
 
   getTerminalList: () => {
     const { terminals } = get();
     return Array.from(terminals.values()).map((t) => t.config);
+  },
+
+  clearUnread: (id) => set((state) => {
+    const newUnread = new Set(state.unreadTerminalIds);
+    newUnread.delete(id);
+    return { unreadTerminalIds: newUnread };
+  }),
+
+  hasUnread: (id) => {
+    return get().unreadTerminalIds.has(id);
   },
 }));

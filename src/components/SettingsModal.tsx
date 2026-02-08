@@ -117,7 +117,7 @@ export function SettingsModal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-text-primary text-sm">ClaudeTerminal</p>
-                  <p className="text-text-secondary text-xs">v1.3.0</p>
+                  <p className="text-text-secondary text-xs">v1.4.0</p>
                   {appUpdater.status === 'available' && appUpdater.updateInfo && (
                     <p className="text-accent-primary text-xs mt-1">
                       Update available: v{appUpdater.updateInfo.version}
@@ -335,6 +335,10 @@ export function SettingsModal() {
                 <span className="text-text-secondary">Add to Grid</span>
                 <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+G</kbd>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">Search Terminal</span>
+                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+F</kbd>
+              </div>
             </div>
           </div>
 
@@ -342,7 +346,7 @@ export function SettingsModal() {
           <div>
             <h3 className="text-text-primary font-medium mb-3">About</h3>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.3.0</p>
+              <p className="text-text-primary text-sm">ClaudeTerminal v1.4.0</p>
               <p className="text-text-secondary text-xs mt-1">
                 A modern terminal manager for Claude Code
               </p>

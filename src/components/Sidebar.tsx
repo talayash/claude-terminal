@@ -17,7 +17,7 @@ export function Sidebar() {
   const [editingNicknameId, setEditingNicknameId] = useState<string | null>(null);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
-  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname } = useTerminalStore();
+  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname, unreadTerminalIds } = useTerminalStore();
   const { openProfileModal, openNewTerminalModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
 
   const terminalList = Array.from(terminals.values())
@@ -97,9 +97,14 @@ export function Sidebar() {
                 </div>
 
                 {/* Status Indicator */}
-                <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[terminal.status]} ${
-                  terminal.status === 'Running' ? 'animate-pulse' : ''
-                }`} />
+                <div className="relative">
+                  <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[terminal.status]} ${
+                    terminal.status === 'Running' ? 'animate-pulse' : ''
+                  }`} />
+                  {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent-primary animate-activity-pulse" />
+                  )}
+                </div>
 
                 {/* Label & Nickname */}
                 <div className="flex-1 min-w-0">

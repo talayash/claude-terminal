@@ -16,6 +16,8 @@ export function useKeyboardShortcuts() {
         openNewTerminalModal();
       }
 
+      // Ctrl+Shift+F is handled inside TerminalView for search
+
       if (ctrl && e.key === 'b') {
         e.preventDefault();
         toggleSidebar();
