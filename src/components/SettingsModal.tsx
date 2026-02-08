@@ -188,8 +188,15 @@ export function SettingsModal() {
               )}
 
               {appUpdater.error && (
-                <div className="text-xs p-2 rounded bg-error/20 text-error">
-                  {appUpdater.error}
+                <div className="text-xs p-2 rounded bg-error/20 text-error space-y-2">
+                  <p>{appUpdater.error}</p>
+                  <button
+                    onClick={() => invoke('open_external_url', { url: 'https://github.com/talayash/claude-terminal/releases/latest' })}
+                    className="flex items-center gap-1.5 text-accent-primary hover:text-accent-primary/80 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    Download manually from GitHub
+                  </button>
                 </div>
               )}
             </div>

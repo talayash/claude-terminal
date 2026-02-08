@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, RefreshCw, CheckCircle, AlertCircle, X, Rocket } from 'lucide-react';
+import { Download, RefreshCw, CheckCircle, AlertCircle, X, Rocket, ExternalLink } from 'lucide-react';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { invoke } from '@tauri-apps/api/core';
+
+const RELEASES_URL = 'https://github.com/talayash/claude-terminal/releases/latest';
 
 interface UpdateInfo {
   version: string;
@@ -236,13 +239,22 @@ export function AutoUpdater() {
                 <p className="text-error text-xs">
                   {error || 'An error occurred while checking for updates.'}
                 </p>
-                <button
-                  onClick={() => checkForUpdates(false)}
-                  className="flex items-center gap-2 text-text-secondary hover:text-text-primary text-sm transition-colors"
-                >
-                  <RefreshCw size={14} />
-                  Try Again
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => checkForUpdates(false)}
+                    className="flex items-center gap-2 text-text-secondary hover:text-text-primary text-sm transition-colors"
+                  >
+                    <RefreshCw size={14} />
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => invoke('open_external_url', { url: RELEASES_URL })}
+                    className="flex items-center gap-2 text-accent-primary hover:text-accent-primary/80 text-sm transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                    Download Manually
+                  </button>
+                </div>
               </div>
             )}
 
@@ -329,9 +341,14 @@ export function useAutoUpdater() {
     } catch (err) {
       console.error('Update download failed:', err);
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to download update');
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Failed to auto-update: ${msg}. Please download manually.`);
       return false;
     }
+  };
+
+  const openReleasesPage = async () => {
+    await invoke('open_external_url', { url: RELEASES_URL });
   };
 
   const restart = async () => {
@@ -350,6 +367,7 @@ export function useAutoUpdater() {
     error,
     checkForUpdates,
     downloadAndInstall,
+    openReleasesPage,
     restart,
   };
 }
