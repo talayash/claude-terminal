@@ -11,6 +11,7 @@ interface AppState {
   editingProfileId: string | null;
   newTerminalModalOpen: boolean;
   defaultClaudeArgs: string[];
+  notifyOnFinish: boolean;
 
   // Grid state
   gridMode: boolean;
@@ -27,6 +28,7 @@ interface AppState {
   openNewTerminalModal: () => void;
   closeNewTerminalModal: () => void;
   setDefaultClaudeArgs: (args: string[]) => void;
+  setNotifyOnFinish: (enabled: boolean) => void;
 
   // Grid actions
   toggleGridMode: () => void;
@@ -64,6 +66,7 @@ export const useAppStore = create<AppState>()(
       editingProfileId: null,
       newTerminalModalOpen: false,
       defaultClaudeArgs: ['--dangerously-skip-permissions'],
+      notifyOnFinish: true,
 
       // Grid state
       gridMode: false,
@@ -80,6 +83,7 @@ export const useAppStore = create<AppState>()(
       openNewTerminalModal: () => set({ newTerminalModalOpen: true }),
       closeNewTerminalModal: () => set({ newTerminalModalOpen: false }),
       setDefaultClaudeArgs: (args) => set({ defaultClaudeArgs: args }),
+      setNotifyOnFinish: (enabled) => set({ notifyOnFinish: enabled }),
 
       // Grid actions
       toggleGridMode: () => set((state) => ({ gridMode: !state.gridMode })),
@@ -122,6 +126,7 @@ export const useAppStore = create<AppState>()(
         sidebarOpen: state.sidebarOpen,
         hintsOpen: state.hintsOpen,
         defaultClaudeArgs: state.defaultClaudeArgs,
+        notifyOnFinish: state.notifyOnFinish,
       }),
     }
   )

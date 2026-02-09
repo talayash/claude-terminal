@@ -36,6 +36,10 @@ pub async fn create_terminal(
         )?
     };
 
+    let terminal_id = config.id.clone();
+    let terminal_label = config.label.clone();
+    let terminal_nickname = config.nickname.clone();
+
     let app_clone = app.clone();
     tokio::spawn(async move {
         while let Some((id, data)) = rx.recv().await {
@@ -44,6 +48,13 @@ pub async fn create_terminal(
                 "data": data,
             }));
         }
+
+        // Terminal process exited — notify the frontend
+        let _ = app_clone.emit("terminal-finished", serde_json::json!({
+            "id": terminal_id,
+            "label": terminal_label,
+            "nickname": terminal_nickname,
+        }));
     });
 
     Ok(config)

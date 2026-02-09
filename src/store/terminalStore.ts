@@ -41,6 +41,7 @@ interface TerminalState {
   resizeTerminal: (id: string, cols: number, rows: number) => Promise<void>;
   setXterm: (id: string, xterm: Terminal) => void;
   handleTerminalOutput: (id: string, data: Uint8Array) => void;
+  updateTerminalStatus: (id: string, status: TerminalConfig['status']) => void;
   getTerminalList: () => TerminalConfig[];
   clearUnread: (id: string) => void;
   hasUnread: (id: string) => boolean;
@@ -172,6 +173,17 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
         return { unreadTerminalIds: newUnread };
       });
     }
+  },
+
+  updateTerminalStatus: (id, status) => {
+    set((state) => {
+      const newTerminals = new Map(state.terminals);
+      const instance = newTerminals.get(id);
+      if (instance) {
+        instance.config.status = status;
+      }
+      return { terminals: newTerminals };
+    });
   },
 
   getTerminalList: () => {

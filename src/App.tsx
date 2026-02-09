@@ -12,6 +12,7 @@ import { AutoUpdater } from './components/AutoUpdater';
 import { useAppStore } from './store/appStore';
 import { useTerminalStore } from './store/terminalStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useNotification } from './hooks/useNotification';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -25,9 +26,10 @@ interface SystemStatus {
 }
 
 function App() {
-  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen } = useAppStore();
-  const { handleTerminalOutput } = useTerminalStore();
+  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, notifyOnFinish } = useAppStore();
+  const { handleTerminalOutput, updateTerminalStatus } = useTerminalStore();
   const [showSetup, setShowSetup] = useState<boolean | null>(null);
+  const { notify } = useNotification();
 
   useKeyboardShortcuts();
 
@@ -53,6 +55,22 @@ function App() {
       unlisten.then(fn => fn());
     };
   }, [handleTerminalOutput]);
+
+  useEffect(() => {
+    const unlisten = listen<{ id: string; label: string; nickname: string | null }>('terminal-finished', (event) => {
+      const { id, label, nickname } = event.payload;
+      updateTerminalStatus(id, 'Stopped');
+
+      if (notifyOnFinish) {
+        const name = nickname || label;
+        notify('Terminal Finished', `${name} has finished running.`);
+      }
+    });
+
+    return () => {
+      unlisten.then(fn => fn());
+    };
+  }, [notifyOnFinish, notify, updateTerminalStatus]);
 
   // Show loading while checking
   if (showSetup === null) {

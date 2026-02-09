@@ -19,7 +19,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/version-1.4.0-green?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.5.0-green?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/Tauri-2.x-purple?style=flat-square" alt="Tauri">
   <img src="https://img.shields.io/badge/React-18-blue?style=flat-square" alt="React">
@@ -31,8 +31,26 @@
 
 **ClaudeTerminal** is a sleek, modern Windows desktop application designed to help developers manage multiple [Claude Code](https://docs.anthropic.com/en/docs/claude-code) terminal instances from a unified interface. Built with Tauri and React, it provides a powerful workspace for running parallel Claude Code sessions with custom configurations, real-time monitoring, and intelligent command assistance.
 
+## Screenshots
+
 <p align="center">
-  <img src="docs/screenshot.png" alt="ClaudeTerminal Screenshot" width="800">
+  <img src="docs/main-view.png" alt="Main View — tabs, sidebar, hints panel" width="800">
+  <br><em>Main view with sidebar, tabs, and hints panel</em>
+</p>
+
+<p align="center">
+  <img src="docs/grid-view.png" alt="Grid View — 4 terminals side by side" width="800">
+  <br><em>Grid view with 4 terminals running simultaneously</em>
+</p>
+
+<p align="center">
+  <img src="docs/settings.png" alt="Settings modal" width="800">
+  <br><em>Settings — updates, arguments, and keyboard shortcuts</em>
+</p>
+
+<p align="center">
+  <img src="docs/profiles.png" alt="Configuration Profiles" width="800">
+  <br><em>Configuration profiles for quick-launch setups</em>
 </p>
 
 ## Features
@@ -105,8 +123,8 @@ Download the latest release for Windows from the [Releases page](https://github.
 
 | Installer Type | Description |
 |---------------|-------------|
-| [ClaudeTerminal_1.4.0_x64-setup.exe](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.4.0_x64-setup.exe) | NSIS Installer (Recommended) |
-| [ClaudeTerminal_1.4.0_x64_en-US.msi](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.4.0_x64_en-US.msi) | MSI Installer |
+| [ClaudeTerminal_1.5.0_x64-setup.exe](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.5.0_x64-setup.exe) | NSIS Installer (Recommended) |
+| [ClaudeTerminal_1.5.0_x64_en-US.msi](https://github.com/talayash/claude-terminal/releases/latest/download/ClaudeTerminal_1.5.0_x64_en-US.msi) | MSI Installer |
 
 ### First Launch
 
