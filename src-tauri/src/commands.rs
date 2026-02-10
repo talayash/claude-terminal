@@ -138,9 +138,7 @@ pub async fn delete_profile(state: State<'_, AppState>, id: String) -> Result<()
 
 #[command]
 pub async fn get_claude_version() -> Result<String, String> {
-    // Use cmd.exe /C on Windows
-    let output = std::process::Command::new("cmd")
-        .args(["/C", "claude", "--version"])
+    let output = shell_command("claude", &["--version"])
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -159,8 +157,7 @@ pub struct UpdateCheckResult {
 #[command]
 pub async fn check_claude_update() -> Result<UpdateCheckResult, String> {
     // Get current version
-    let current_output = std::process::Command::new("cmd")
-        .args(["/C", "claude", "--version"])
+    let current_output = shell_command("claude", &["--version"])
         .output()
         .map_err(|e| format!("Failed to get current version: {}", e))?;
 
@@ -173,8 +170,7 @@ pub async fn check_claude_update() -> Result<UpdateCheckResult, String> {
     }
 
     // Get latest version from npm
-    let npm_output = std::process::Command::new("cmd")
-        .args(["/C", "npm", "view", "@anthropic-ai/claude-code", "version"])
+    let npm_output = shell_command("npm", &["view", "@anthropic-ai/claude-code", "version"])
         .output()
         .map_err(|e| format!("Failed to check latest version: {}", e))?;
 
@@ -204,9 +200,7 @@ pub async fn check_claude_update() -> Result<UpdateCheckResult, String> {
 
 #[command]
 pub async fn update_claude_code() -> Result<String, String> {
-    // Use cmd.exe /C on Windows to run npm
-    let output = std::process::Command::new("cmd")
-        .args(["/C", "npm", "install", "-g", "@anthropic-ai/claude-code@latest"])
+    let output = shell_command("npm", &["install", "-g", "@anthropic-ai/claude-code@latest"])
         .output()
         .map_err(|e| format!("Failed to run npm: {}", e))?;
 
@@ -234,12 +228,36 @@ pub struct SystemStatus {
     pub claude_version: Option<String>,
 }
 
+/// Creates a Command that works cross-platform.
+/// On Windows, wraps the command with `cmd /C` so that `.cmd`/`.bat` scripts
+/// (like `npm.cmd`, `claude.cmd`) are resolved correctly.
+fn shell_command(program: &str, args: &[&str]) -> std::process::Command {
+    if cfg!(target_os = "windows") {
+        let mut cmd = std::process::Command::new("cmd");
+        cmd.arg("/C").arg(program);
+        for arg in args {
+            cmd.arg(arg);
+        }
+        // Prevent a console window from flashing on Windows
+        #[cfg(target_os = "windows")]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        }
+        cmd
+    } else {
+        let mut cmd = std::process::Command::new(program);
+        for arg in args {
+            cmd.arg(arg);
+        }
+        cmd
+    }
+}
+
 #[command]
 pub async fn check_system_requirements() -> Result<SystemStatus, String> {
     // Check Node.js
-    let node_result = std::process::Command::new("node")
-        .arg("--version")
-        .output();
+    let node_result = shell_command("node", &["--version"]).output();
 
     let (node_installed, node_version) = match node_result {
         Ok(output) if output.status.success() => {
@@ -250,9 +268,7 @@ pub async fn check_system_requirements() -> Result<SystemStatus, String> {
     };
 
     // Check npm
-    let npm_result = std::process::Command::new("npm")
-        .arg("--version")
-        .output();
+    let npm_result = shell_command("npm", &["--version"]).output();
 
     let (npm_installed, npm_version) = match npm_result {
         Ok(output) if output.status.success() => {
@@ -263,9 +279,7 @@ pub async fn check_system_requirements() -> Result<SystemStatus, String> {
     };
 
     // Check Claude Code
-    let claude_result = std::process::Command::new("claude")
-        .arg("--version")
-        .output();
+    let claude_result = shell_command("claude", &["--version"]).output();
 
     let (claude_installed, claude_version) = match claude_result {
         Ok(output) if output.status.success() => {
@@ -287,8 +301,7 @@ pub async fn check_system_requirements() -> Result<SystemStatus, String> {
 
 #[command]
 pub async fn install_claude_code() -> Result<String, String> {
-    let output = std::process::Command::new("npm")
-        .args(["install", "-g", "@anthropic-ai/claude-code"])
+    let output = shell_command("npm", &["install", "-g", "@anthropic-ai/claude-code"])
         .output()
         .map_err(|e| e.to_string())?;
 
@@ -297,6 +310,17 @@ pub async fn install_claude_code() -> Result<String, String> {
     } else {
         Err(String::from_utf8_lossy(&output.stderr).to_string())
     }
+}
+
+#[command]
+pub async fn send_notification(app: AppHandle, title: String, body: String) -> Result<(), String> {
+    use tauri_plugin_notification::NotificationExt;
+    app.notification()
+        .builder()
+        .title(&title)
+        .body(&body)
+        .show()
+        .map_err(|e| e.to_string())
 }
 
 #[command]

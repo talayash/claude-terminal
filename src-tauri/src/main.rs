@@ -21,6 +21,7 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let db = database::Database::new()?;
@@ -53,6 +54,7 @@ fn main() {
             commands::check_system_requirements,
             commands::install_claude_code,
             commands::open_external_url,
+            commands::send_notification,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {

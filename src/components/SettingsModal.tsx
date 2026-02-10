@@ -4,7 +4,6 @@ import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check, 
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
 import { useAutoUpdater } from './AutoUpdater';
-import { useNotification } from '../hooks/useNotification';
 
 interface UpdateCheckResult {
   current_version: string;
@@ -14,7 +13,6 @@ interface UpdateCheckResult {
 
 export function SettingsModal() {
   const { closeSettings, defaultClaudeArgs, setDefaultClaudeArgs, notifyOnFinish, setNotifyOnFinish } = useAppStore();
-  const { requestPermission } = useNotification();
   const [claudeVersion, setClaudeVersion] = useState<string>('');
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [updateAvailable, setUpdateAvailable] = useState<boolean | null>(null);
@@ -119,7 +117,7 @@ export function SettingsModal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-text-primary text-sm">ClaudeTerminal</p>
-                  <p className="text-text-secondary text-xs">v1.5.0</p>
+                  <p className="text-text-secondary text-xs">v1.5.1</p>
                   {appUpdater.status === 'available' && appUpdater.updateInfo && (
                     <p className="text-accent-primary text-xs mt-1">
                       Update available: v{appUpdater.updateInfo.version}
@@ -305,14 +303,12 @@ export function SettingsModal() {
                 <div>
                   <p className="text-text-primary text-sm">Notify when terminal finishes</p>
                   <p className="text-text-secondary text-xs mt-0.5">
-                    Send a Windows notification when a terminal process exits (only when app is not focused)
+                    Send a desktop notification when a terminal process exits
                   </p>
                 </div>
                 <button
-                  onClick={async () => {
-                    const next = !notifyOnFinish;
-                    setNotifyOnFinish(next);
-                    if (next) await requestPermission();
+                  onClick={() => {
+                    setNotifyOnFinish(!notifyOnFinish);
                   }}
                   className={`relative w-11 h-6 rounded-full transition-colors ${
                     notifyOnFinish ? 'bg-accent-primary' : 'bg-white/20'
@@ -379,7 +375,7 @@ export function SettingsModal() {
           <div>
             <h3 className="text-text-primary font-medium mb-3">About</h3>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.5.0</p>
+              <p className="text-text-primary text-sm">ClaudeTerminal v1.5.1</p>
               <p className="text-text-secondary text-xs mt-1">
                 A modern terminal manager for Claude Code
               </p>
