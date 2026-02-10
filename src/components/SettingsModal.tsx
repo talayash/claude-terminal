@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check, Rocket } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import { useAppStore } from '../store/appStore';
-import { useAutoUpdater } from './AutoUpdater';
+import { useUpdaterStore } from '../store/updaterStore';
 
 interface UpdateCheckResult {
   current_version: string;
@@ -23,10 +23,11 @@ export function SettingsModal() {
   const [argsText, setArgsText] = useState(defaultClaudeArgs.join('\n'));
 
   // App auto-updater
-  const appUpdater = useAutoUpdater();
+  const appUpdater = useUpdaterStore();
 
   useEffect(() => {
     checkForUpdates();
+    appUpdater.checkForUpdates();
   }, []);
 
   const checkForUpdates = async () => {
@@ -117,7 +118,7 @@ export function SettingsModal() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-text-primary text-sm">ClaudeTerminal</p>
-                  <p className="text-text-secondary text-xs">v1.5.1</p>
+                  <p className="text-text-secondary text-xs">v1.5.2</p>
                   {appUpdater.status === 'available' && appUpdater.updateInfo && (
                     <p className="text-accent-primary text-xs mt-1">
                       Update available: v{appUpdater.updateInfo.version}
@@ -375,7 +376,7 @@ export function SettingsModal() {
           <div>
             <h3 className="text-text-primary font-medium mb-3">About</h3>
             <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.5.1</p>
+              <p className="text-text-primary text-sm">ClaudeTerminal v1.5.2</p>
               <p className="text-text-secondary text-xs mt-1">
                 A modern terminal manager for Claude Code
               </p>

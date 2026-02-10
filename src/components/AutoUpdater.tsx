@@ -1,25 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, RefreshCw, CheckCircle, AlertCircle, X, Rocket, ExternalLink } from 'lucide-react';
-import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/plugin-process';
 import { invoke } from '@tauri-apps/api/core';
+import { useUpdaterStore } from '../store/updaterStore';
 
 const RELEASES_URL = 'https://github.com/talayash/claude-terminal/releases/latest';
 
-interface UpdateInfo {
-  version: string;
-  date: string;
-  body: string;
-}
-
-type UpdateStatus = 'idle' | 'checking' | 'available' | 'downloading' | 'ready' | 'error' | 'up-to-date';
-
 export function AutoUpdater() {
-  const [status, setStatus] = useState<UpdateStatus>('idle');
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const { status, updateInfo, downloadProgress, error, checkForUpdates, downloadAndInstall, restart } = useUpdaterStore();
   const [showBanner, setShowBanner] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -28,92 +16,20 @@ export function AutoUpdater() {
     const checkOnStartup = async () => {
       // Wait a bit before checking to not slow down startup
       await new Promise(resolve => setTimeout(resolve, 3000));
-      await checkForUpdates(true);
+      const result = await checkForUpdates();
+      if (result.available) {
+        setShowBanner(true);
+      }
     };
     checkOnStartup();
   }, []);
 
-  const checkForUpdates = async (silent = false) => {
-    try {
-      setStatus('checking');
-      setError(null);
-
-      const update = await check();
-
-      if (update) {
-        setUpdateInfo({
-          version: update.version,
-          date: update.date || '',
-          body: update.body || '',
-        });
-        setStatus('available');
-        setShowBanner(true);
-        setDismissed(false);
-      } else {
-        setStatus('up-to-date');
-        if (!silent) {
-          setShowBanner(true);
-          setTimeout(() => setShowBanner(false), 3000);
-        }
-      }
-    } catch (err) {
-      console.error('Update check failed:', err);
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to check for updates');
-      if (!silent) {
-        setShowBanner(true);
-      }
+  // Show banner when update becomes available (e.g. from Settings check)
+  useEffect(() => {
+    if (status === 'available' && !dismissed) {
+      setShowBanner(true);
     }
-  };
-
-  const downloadAndInstall = async () => {
-    try {
-      setStatus('downloading');
-      setDownloadProgress(0);
-
-      const update = await check();
-      if (!update) {
-        setStatus('error');
-        setError('Update no longer available');
-        return;
-      }
-
-      let downloaded = 0;
-      let contentLength = 0;
-
-      await update.downloadAndInstall((event) => {
-        switch (event.event) {
-          case 'Started':
-            contentLength = event.data.contentLength || 0;
-            break;
-          case 'Progress':
-            downloaded += event.data.chunkLength;
-            if (contentLength > 0) {
-              setDownloadProgress(Math.round((downloaded / contentLength) * 100));
-            }
-            break;
-          case 'Finished':
-            setDownloadProgress(100);
-            break;
-        }
-      });
-
-      setStatus('ready');
-    } catch (err) {
-      console.error('Update download failed:', err);
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to download update');
-    }
-  };
-
-  const restartApp = async () => {
-    try {
-      await relaunch();
-    } catch (err) {
-      console.error('Failed to restart:', err);
-      setError('Failed to restart. Please restart manually.');
-    }
-  };
+  }, [status, dismissed]);
 
   const dismissBanner = () => {
     setDismissed(true);
@@ -218,7 +134,7 @@ export function AutoUpdater() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={restartApp}
+                    onClick={restart}
                     className="flex-1 flex items-center justify-center gap-2 bg-success hover:bg-success/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
                   >
                     <Rocket size={14} />
@@ -241,7 +157,7 @@ export function AutoUpdater() {
                 </p>
                 <div className="flex gap-3">
                   <button
-                    onClick={() => checkForUpdates(false)}
+                    onClick={() => checkForUpdates()}
                     className="flex items-center gap-2 text-text-secondary hover:text-text-primary text-sm transition-colors"
                   >
                     <RefreshCw size={14} />
@@ -268,106 +184,4 @@ export function AutoUpdater() {
       </motion.div>
     </AnimatePresence>
   );
-}
-
-// Export a hook for manual update checking from settings
-export function useAutoUpdater() {
-  const [status, setStatus] = useState<UpdateStatus>('idle');
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-
-  const checkForUpdates = async () => {
-    try {
-      setStatus('checking');
-      setError(null);
-
-      const update = await check();
-
-      if (update) {
-        setUpdateInfo({
-          version: update.version,
-          date: update.date || '',
-          body: update.body || '',
-        });
-        setStatus('available');
-        return { available: true, version: update.version };
-      } else {
-        setStatus('up-to-date');
-        return { available: false };
-      }
-    } catch (err) {
-      console.error('Update check failed:', err);
-      setStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to check for updates');
-      return { available: false, error: err };
-    }
-  };
-
-  const downloadAndInstall = async () => {
-    try {
-      setStatus('downloading');
-      setDownloadProgress(0);
-
-      const update = await check();
-      if (!update) {
-        setStatus('error');
-        setError('Update no longer available');
-        return false;
-      }
-
-      let downloaded = 0;
-      let contentLength = 0;
-
-      await update.downloadAndInstall((event) => {
-        switch (event.event) {
-          case 'Started':
-            contentLength = event.data.contentLength || 0;
-            break;
-          case 'Progress':
-            downloaded += event.data.chunkLength;
-            if (contentLength > 0) {
-              setDownloadProgress(Math.round((downloaded / contentLength) * 100));
-            }
-            break;
-          case 'Finished':
-            setDownloadProgress(100);
-            break;
-        }
-      });
-
-      setStatus('ready');
-      return true;
-    } catch (err) {
-      console.error('Update download failed:', err);
-      setStatus('error');
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(`Failed to auto-update: ${msg}. Please download manually.`);
-      return false;
-    }
-  };
-
-  const openReleasesPage = async () => {
-    await invoke('open_external_url', { url: RELEASES_URL });
-  };
-
-  const restart = async () => {
-    try {
-      await relaunch();
-    } catch (err) {
-      console.error('Failed to restart:', err);
-      setError('Failed to restart. Please restart manually.');
-    }
-  };
-
-  return {
-    status,
-    updateInfo,
-    downloadProgress,
-    error,
-    checkForUpdates,
-    downloadAndInstall,
-    openReleasesPage,
-    restart,
-  };
 }
