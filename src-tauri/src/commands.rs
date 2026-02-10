@@ -313,14 +313,16 @@ pub async fn install_claude_code() -> Result<String, String> {
 }
 
 #[command]
-pub async fn send_notification(app: AppHandle, title: String, body: String) -> Result<(), String> {
-    use tauri_plugin_notification::NotificationExt;
-    app.notification()
-        .builder()
-        .title(&title)
-        .body(&body)
-        .show()
-        .map_err(|e| e.to_string())
+pub async fn send_notification(title: String, body: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        notify_rust::Notification::new()
+            .summary(&title)
+            .body(&body)
+            .show()
+            .map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[command]
