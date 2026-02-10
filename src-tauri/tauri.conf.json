@@ -62,7 +62,7 @@
       "open": true
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFDNDA4NUVDMEFBNzdEMEUKUldRT2ZhY0s3SVZBSEhxK2cyRm92VE9QVTlMSWxJdFFLODVhOGt0dldiSVhuNm8xOE5HZmZjbmQK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3OUNBMEQ5MzI2RUYwNTgKUldSWThHNHkyYUNjeDAxWjV3WjBnZHVtQlpDKzFtMVFkNmVIbnJuQ3QzbVk4dHI2Sk84ZnB1MjcK",
       "endpoints": [
         "https://github.com/talayash/claude-terminal/releases/latest/download/latest.json"
       ],
