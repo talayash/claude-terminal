@@ -29,7 +29,7 @@ const TAG_COLORS = [
 
 export function NewTerminalModal() {
   const { closeNewTerminalModal, defaultClaudeArgs } = useAppStore();
-  const { terminals, createTerminal, writeToTerminal } = useTerminalStore();
+  const { terminals, createTerminal } = useTerminalStore();
 
   const [profiles, setProfiles] = useState<ConfigProfile[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
@@ -103,8 +103,8 @@ export function NewTerminalModal() {
       const label = `Terminal ${terminals.size + 1}`;
       const colorTag = TAG_COLORS[terminals.size % TAG_COLORS.length];
 
-      // Create the terminal
-      const terminalId = await createTerminal(
+      // Create the terminal — claude is launched directly by the backend
+      await createTerminal(
         label,
         workingDirectory,
         claudeArgs,
@@ -112,13 +112,6 @@ export function NewTerminalModal() {
         colorTag,
         nickname || undefined
       );
-
-      // Wait a brief moment for terminal to initialize
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Auto-run claude command with args
-      const claudeCommand = ['claude', ...claudeArgs].join(' ');
-      await writeToTerminal(terminalId, claudeCommand + '\r');
 
       closeNewTerminalModal();
     } catch (error) {

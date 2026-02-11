@@ -67,12 +67,31 @@ impl TerminalManager {
             })
             .map_err(|e| format!("Failed to open pty: {}", e))?;
 
-        // Use cmd.exe on Windows
+        // Spawn claude directly so the process exits when claude finishes,
+        // allowing the terminal-finished event to fire for notifications
         #[cfg(target_os = "windows")]
-        let mut cmd = CommandBuilder::new("cmd.exe");
+        let mut cmd = {
+            let mut c = CommandBuilder::new("cmd.exe");
+            c.arg("/C");
+            c.arg("claude");
+            for arg in &claude_args {
+                c.arg(arg);
+            }
+            c
+        };
 
         #[cfg(not(target_os = "windows"))]
-        let mut cmd = CommandBuilder::new("bash");
+        let mut cmd = {
+            let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+            let mut c = CommandBuilder::new(shell);
+            let claude_cmd = std::iter::once("claude".to_string())
+                .chain(claude_args.iter().cloned())
+                .collect::<Vec<_>>()
+                .join(" ");
+            c.arg("-ic");
+            c.arg(claude_cmd);
+            c
+        };
 
         // Set working directory
         if !working_directory.is_empty() {

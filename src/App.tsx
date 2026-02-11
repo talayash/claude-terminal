@@ -57,12 +57,17 @@ function App() {
   }, [handleTerminalOutput]);
 
   useEffect(() => {
-    const unlisten = listen<{ id: string; label: string; nickname: string | null }>('terminal-finished', (event) => {
-      const { id, label, nickname } = event.payload;
+    const unlisten = listen<{ id: string }>('terminal-finished', (event) => {
+      const { id } = event.payload;
+
+      // Get the current terminal name from the store (always up-to-date, even after renames)
+      const terminals = useTerminalStore.getState().terminals;
+      const terminal = terminals.get(id);
+      const name = terminal?.config.nickname || terminal?.config.label || 'Terminal';
+
       updateTerminalStatus(id, 'Stopped');
 
       if (notifyOnFinish) {
-        const name = nickname || label;
         notify('Terminal Finished', `${name} has finished running.`);
       }
     });
