@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run tauri dev)",
+      "Bash(npm run tauri build)",
+      "Bash(npm install)",
+      "Bash(cargo check:src-tauri)",
+      "Bash(cargo clippy:src-tauri)",
+      "Bash(cargo fmt:src-tauri)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ]
+  }
+}
