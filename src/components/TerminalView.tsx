@@ -91,13 +91,16 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
         return true;
       }
 
-      if (isCtrl && e.key === 'v' && e.type === 'keydown') {
-        navigator.clipboard.readText().then((text) => {
-          if (text) {
-            writeToTerminal(terminalId, text);
-          }
-        });
-        return false; // Prevent default
+      if (isCtrl && e.key === 'v') {
+        if (e.type === 'keydown') {
+          e.preventDefault();
+          navigator.clipboard.readText().then((text) => {
+            if (text) {
+              writeToTerminal(terminalId, text);
+            }
+          });
+        }
+        return false; // Block both keydown and keyup from xterm
       }
 
       return true;

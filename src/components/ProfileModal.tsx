@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Plus, Trash2, Save } from 'lucide-react';
+import { X, Plus, Trash2, Save, FolderOpen } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
+import { open } from '@tauri-apps/plugin-dialog';
 import { useAppStore } from '../store/appStore';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -55,6 +56,22 @@ export function ProfileModal() {
     await invoke('save_profile', { profile: selectedProfile });
     await loadProfiles();
     setIsCreating(false);
+  };
+
+  const handleBrowseDirectory = async () => {
+    if (!selectedProfile) return;
+    try {
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        defaultPath: selectedProfile.working_directory || undefined,
+      });
+      if (selected && typeof selected === 'string') {
+        setSelectedProfile({ ...selectedProfile, working_directory: selected });
+      }
+    } catch (error) {
+      console.error('Failed to open directory picker:', error);
+    }
   };
 
   const handleDeleteProfile = async (id: string) => {
@@ -157,13 +174,22 @@ export function ProfileModal() {
 
                 <div>
                   <label className="block text-text-secondary text-sm mb-1">Working Directory</label>
-                  <input
-                    type="text"
-                    value={selectedProfile.working_directory}
-                    onChange={(e) => setSelectedProfile({ ...selectedProfile, working_directory: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
-                    placeholder="C:\path\to\project"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={selectedProfile.working_directory}
+                      onChange={(e) => setSelectedProfile({ ...selectedProfile, working_directory: e.target.value })}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+                      placeholder="C:\path\to\project"
+                    />
+                    <button
+                      onClick={handleBrowseDirectory}
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                      title="Browse for directory"
+                    >
+                      <FolderOpen size={18} className="text-text-secondary" />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
