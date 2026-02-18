@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { check } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
+import { invoke } from '@tauri-apps/api/core';
 
 interface UpdateInfo {
   version: string;
@@ -102,6 +103,11 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
   },
 
   restart: async () => {
+    try {
+      await invoke('save_session_for_restore');
+    } catch (err) {
+      console.error('Failed to save session before restart:', err);
+    }
     try {
       await relaunch();
     } catch (err) {

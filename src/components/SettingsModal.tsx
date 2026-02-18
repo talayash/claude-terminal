@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Download, RefreshCw, CheckCircle, AlertCircle, ExternalLink, Check, Rocket } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 import { useAppStore } from '../store/appStore';
 import { useUpdaterStore } from '../store/updaterStore';
 
@@ -12,7 +13,7 @@ interface UpdateCheckResult {
 }
 
 export function SettingsModal() {
-  const { closeSettings, defaultClaudeArgs, setDefaultClaudeArgs, notifyOnFinish, setNotifyOnFinish } = useAppStore();
+  const { closeSettings, defaultClaudeArgs, setDefaultClaudeArgs, notifyOnFinish, setNotifyOnFinish, restoreSession, setRestoreSession } = useAppStore();
   const [claudeVersion, setClaudeVersion] = useState<string>('');
   const [latestVersion, setLatestVersion] = useState<string>('');
   const [updateAvailable, setUpdateAvailable] = useState<boolean | null>(null);
@@ -22,8 +23,13 @@ export function SettingsModal() {
   const [updateMessage, setUpdateMessage] = useState<string>('');
   const [argsText, setArgsText] = useState(defaultClaudeArgs.join('\n'));
 
-  // App auto-updater
+  // App version + auto-updater
+  const [appVersion, setAppVersion] = useState<string>('');
   const appUpdater = useUpdaterStore();
+
+  useEffect(() => {
+    getVersion().then(setAppVersion);
+  }, []);
 
   useEffect(() => {
     checkForUpdates();
@@ -88,112 +94,107 @@ export function SettingsModal() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
       onClick={closeSettings}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-bg-elevated border border-white/10 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden"
+        className="bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-2xl w-full max-w-lg overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="text-text-primary text-lg font-semibold">Settings</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-text-primary text-[14px] font-semibold">Settings</h2>
           <button
             onClick={closeSettings}
-            className="p-1 rounded-md hover:bg-white/10 text-text-secondary transition-colors"
+            className="p-1 rounded hover:bg-white/[0.06] text-text-tertiary transition-colors"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 space-y-5 max-h-[70vh] overflow-y-auto">
           {/* App Updates */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">App Updates</h3>
-            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">App Updates</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-text-primary text-sm">ClaudeTerminal</p>
-                  <p className="text-text-secondary text-xs">v1.5.2</p>
+                  <p className="text-text-primary text-[13px]">ClaudeTerminal</p>
+                  <p className="text-text-tertiary text-[11px]">v{appVersion}</p>
                   {appUpdater.status === 'available' && appUpdater.updateInfo && (
-                    <p className="text-accent-primary text-xs mt-1">
+                    <p className="text-accent-primary text-[11px] mt-1">
                       Update available: v{appUpdater.updateInfo.version}
                     </p>
                   )}
                 </div>
                 <div className="flex gap-2">
                   {appUpdater.status === 'up-to-date' ? (
-                    <div className="flex items-center gap-2 bg-success/20 text-success py-2 px-4 rounded-lg text-sm font-medium">
-                      <Check size={16} />
+                    <div className="flex items-center gap-2 bg-success/10 text-success h-9 px-4 rounded-md text-[12px] font-medium">
+                      <Check size={14} />
                       Up to date
                     </div>
                   ) : appUpdater.status === 'ready' ? (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={appUpdater.restart}
-                      className="flex items-center gap-2 bg-success hover:bg-success/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 bg-success hover:bg-success/90 text-white h-9 px-4 rounded-md text-[12px] font-medium transition-colors"
                     >
-                      <Rocket size={16} />
+                      <Rocket size={14} />
                       Restart to Update
-                    </motion.button>
+                    </button>
                   ) : appUpdater.status === 'downloading' ? (
-                    <div className="flex items-center gap-2 bg-white/10 text-text-primary py-2 px-4 rounded-lg text-sm font-medium">
-                      <RefreshCw size={16} className="animate-spin" />
+                    <div className="flex items-center gap-2 bg-bg-secondary text-text-primary h-9 px-4 rounded-md text-[12px] font-medium">
+                      <RefreshCw size={14} className="animate-spin" />
                       {appUpdater.downloadProgress}%
                     </div>
                   ) : appUpdater.status === 'available' ? (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={appUpdater.downloadAndInstall}
-                      className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 bg-accent-primary hover:bg-accent-secondary text-white h-9 px-4 rounded-md text-[12px] font-medium transition-colors"
                     >
-                      <Download size={16} />
+                      <Download size={14} />
                       Download Update
-                    </motion.button>
+                    </button>
                   ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={appUpdater.checkForUpdates}
                       disabled={appUpdater.status === 'checking'}
-                      className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-text-primary py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+                      className="flex items-center gap-2 bg-bg-secondary ring-1 ring-border-light hover:bg-white/[0.04] text-text-primary h-9 px-4 rounded-md text-[12px] font-medium disabled:opacity-50 transition-colors"
                     >
                       {appUpdater.status === 'checking' ? (
-                        <RefreshCw size={16} className="animate-spin" />
+                        <RefreshCw size={14} className="animate-spin" />
                       ) : (
-                        <RefreshCw size={16} />
+                        <RefreshCw size={14} />
                       )}
                       Check for Updates
-                    </motion.button>
+                    </button>
                   )}
                 </div>
               </div>
 
               {appUpdater.status === 'downloading' && (
                 <div className="space-y-1">
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-accent-primary"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${appUpdater.downloadProgress}%` }}
+                  <div className="h-1 bg-border rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-accent-primary transition-all duration-300"
+                      style={{ width: `${appUpdater.downloadProgress}%` }}
                     />
                   </div>
-                  <p className="text-text-secondary text-xs">Downloading update...</p>
+                  <p className="text-text-tertiary text-[11px]">Downloading update...</p>
                 </div>
               )}
 
               {appUpdater.error && (
-                <div className="text-xs p-2 rounded bg-error/20 text-error space-y-2">
+                <div className="text-[11px] p-2 rounded bg-error/10 text-error space-y-2">
                   <p>{appUpdater.error}</p>
                   <button
                     onClick={() => invoke('open_external_url', { url: 'https://github.com/talayash/claude-terminal/releases/latest' })}
-                    className="flex items-center gap-1.5 text-accent-primary hover:text-accent-primary/80 transition-colors"
+                    className="flex items-center gap-1.5 text-accent-primary hover:text-accent-secondary transition-colors"
                   >
                     <ExternalLink size={12} />
                     Download manually from GitHub
@@ -205,70 +206,66 @@ export function SettingsModal() {
 
           {/* Claude Code Version */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">Claude Code</h3>
-            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">Claude Code</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-text-primary text-sm">Current Version</p>
-                  <p className="text-text-secondary text-xs">
+                  <p className="text-text-primary text-[13px]">Current Version</p>
+                  <p className="text-text-tertiary text-[11px]">
                     {isChecking ? 'Checking...' : claudeVersion || 'Not installed'}
                   </p>
                   {latestVersion && updateAvailable && (
-                    <p className="text-accent-primary text-xs mt-1">
+                    <p className="text-accent-primary text-[11px] mt-1">
                       Update available: v{latestVersion}
                     </p>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <button
                     onClick={openDocs}
-                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-text-primary py-2 px-3 rounded-lg text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 bg-bg-secondary ring-1 ring-border-light hover:bg-white/[0.04] text-text-primary h-9 px-3 rounded-md text-[12px] font-medium transition-colors"
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={12} />
                     Docs
-                  </motion.button>
+                  </button>
                   {updateAvailable === false ? (
-                    <div className="flex items-center gap-2 bg-success/20 text-success py-2 px-4 rounded-lg text-sm font-medium">
-                      <Check size={16} />
+                    <div className="flex items-center gap-2 bg-success/10 text-success h-9 px-4 rounded-md text-[12px] font-medium">
+                      <Check size={14} />
                       Up to date
                     </div>
                   ) : (
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={handleUpdateClaude}
                       disabled={isUpdating || isChecking}
-                      className={`flex items-center gap-2 py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors ${
+                      className={`flex items-center gap-2 h-9 px-4 rounded-md text-[12px] font-medium disabled:opacity-50 transition-colors ${
                         updateAvailable
-                          ? 'bg-accent-primary hover:bg-accent-primary/80 text-white'
-                          : 'bg-white/10 hover:bg-white/20 text-text-primary'
+                          ? 'bg-accent-primary hover:bg-accent-secondary text-white'
+                          : 'bg-bg-secondary ring-1 ring-border-light hover:bg-white/[0.04] text-text-primary'
                       }`}
                     >
                       {isUpdating ? (
-                        <RefreshCw size={16} className="animate-spin" />
+                        <RefreshCw size={14} className="animate-spin" />
                       ) : isChecking ? (
-                        <RefreshCw size={16} className="animate-spin" />
+                        <RefreshCw size={14} className="animate-spin" />
                       ) : updateStatus === 'success' ? (
-                        <CheckCircle size={16} />
+                        <CheckCircle size={14} />
                       ) : updateStatus === 'error' ? (
-                        <AlertCircle size={16} />
+                        <AlertCircle size={14} />
                       ) : (
-                        <Download size={16} />
+                        <Download size={14} />
                       )}
                       {isUpdating ? 'Updating...' : isChecking ? 'Checking...' : 'Update'}
-                    </motion.button>
+                    </button>
                   )}
                 </div>
               </div>
 
               {updateMessage && (
-                <div className={`text-xs p-2 rounded ${
-                  updateStatus === 'success' ? 'bg-success/20 text-success' :
-                  updateStatus === 'uptodate' ? 'bg-success/20 text-success' :
-                  updateStatus === 'error' ? 'bg-error/20 text-error' :
-                  'bg-white/10 text-text-secondary'
+                <div className={`text-[11px] p-2 rounded ${
+                  updateStatus === 'success' ? 'bg-success/10 text-success' :
+                  updateStatus === 'uptodate' ? 'bg-success/10 text-success' :
+                  updateStatus === 'error' ? 'bg-error/10 text-error' :
+                  'bg-bg-secondary text-text-secondary'
                 }`}>
                   {updateMessage}
                 </div>
@@ -278,46 +275,75 @@ export function SettingsModal() {
 
           {/* Default Claude Arguments */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">Default Claude Arguments</h3>
-            <div className="bg-white/5 rounded-lg p-3 space-y-3">
-              <p className="text-text-secondary text-xs">
-                These arguments will be pre-filled when creating a new terminal. One argument per line.
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">Default Claude Arguments</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3 space-y-3">
+              <p className="text-text-tertiary text-[11px]">
+                Pre-filled when creating a new terminal. One argument per line.
               </p>
               <textarea
                 value={argsText}
                 onChange={(e) => setArgsText(e.target.value)}
                 onBlur={() => setDefaultClaudeArgs(argsText.split('\n').filter(Boolean))}
-                className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50 font-mono h-24 resize-none"
+                className="w-full bg-bg-elevated ring-1 ring-border-light rounded-md py-2 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary font-mono h-24 resize-none transition-colors"
                 placeholder="--dangerously-skip-permissions&#10;--model opus"
               />
-              <p className="text-text-secondary text-xs">
-                Command: <code className="text-accent-primary">claude {argsText.split('\n').filter(Boolean).join(' ')}</code>
+              <p className="text-text-tertiary text-[11px]">
+                Command: <code className="text-text-secondary">claude {argsText.split('\n').filter(Boolean).join(' ')}</code>
               </p>
             </div>
           </div>
 
           {/* Notifications */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">Notifications</h3>
-            <div className="bg-white/5 rounded-lg p-3 space-y-3">
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">Notifications</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-text-primary text-sm">Notify when terminal finishes</p>
-                  <p className="text-text-secondary text-xs mt-0.5">
-                    Send a desktop notification when a terminal process exits
+                  <p className="text-text-primary text-[13px]">Notify when terminal finishes</p>
+                  <p className="text-text-tertiary text-[11px] mt-0.5">
+                    Desktop notification when a terminal process exits
                   </p>
                 </div>
                 <button
                   onClick={() => {
                     setNotifyOnFinish(!notifyOnFinish);
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${
-                    notifyOnFinish ? 'bg-accent-primary' : 'bg-white/20'
+                  className={`relative w-10 h-5 rounded-full transition-colors ${
+                    notifyOnFinish ? 'bg-accent-primary' : 'bg-border-light'
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
                       notifyOnFinish ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Session */}
+          <div>
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">Session</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-primary text-[13px]">Restore previous session</p>
+                  <p className="text-text-tertiary text-[11px] mt-0.5">
+                    Reopen terminals from last session on startup
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setRestoreSession(!restoreSession);
+                  }}
+                  className={`relative w-10 h-5 rounded-full transition-colors ${
+                    restoreSession ? 'bg-accent-primary' : 'bg-border-light'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                      restoreSession ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
@@ -327,58 +353,35 @@ export function SettingsModal() {
 
           {/* Keyboard Shortcuts */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">Keyboard Shortcuts</h3>
-            <div className="bg-white/5 rounded-lg p-3 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">New Terminal</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+N</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Close Terminal</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+W</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Toggle Sidebar</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+B</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Toggle Hints</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">F1</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Switch Tab</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Tab</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Copy / Interrupt</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+C</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Paste</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+V</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Toggle Grid View</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+G</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Add to Grid</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+G</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Search Terminal</span>
-                <kbd className="text-text-primary bg-white/10 px-2 py-0.5 rounded">Ctrl+Shift+F</kbd>
-              </div>
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">Keyboard Shortcuts</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3 space-y-1.5">
+              {[
+                ['New Terminal', 'Ctrl+Shift+N'],
+                ['Close Terminal', 'Ctrl+W'],
+                ['Toggle Sidebar', 'Ctrl+B'],
+                ['Toggle Hints', 'F1'],
+                ['Switch Tab', 'Ctrl+Tab'],
+                ['Copy / Interrupt', 'Ctrl+C'],
+                ['Paste', 'Ctrl+V'],
+                ['Toggle Grid View', 'Ctrl+G'],
+                ['Add to Grid', 'Ctrl+Shift+G'],
+                ['Search Terminal', 'Ctrl+Shift+F'],
+              ].map(([label, shortcut]) => (
+                <div key={label} className="flex justify-between text-[12px]">
+                  <span className="text-text-secondary">{label}</span>
+                  <kbd className="text-text-primary bg-bg-elevated px-2 py-0.5 rounded text-[11px] font-medium">{shortcut}</kbd>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* About */}
           <div>
-            <h3 className="text-text-primary font-medium mb-3">About</h3>
-            <div className="bg-white/5 rounded-lg p-3">
-              <p className="text-text-primary text-sm">ClaudeTerminal v1.5.2</p>
-              <p className="text-text-secondary text-xs mt-1">
-                A modern terminal manager for Claude Code
+            <h3 className="text-text-primary text-[13px] font-medium mb-2">About</h3>
+            <div className="bg-bg-primary rounded-md ring-1 ring-border p-3">
+              <p className="text-text-primary text-[13px]">ClaudeTerminal v{appVersion}</p>
+              <p className="text-text-tertiary text-[11px] mt-0.5">
+                A terminal manager for Claude Code
               </p>
             </div>
           </div>

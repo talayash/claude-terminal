@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Download, ExternalLink, Loader2, Terminal, Box, RefreshCw } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
@@ -22,10 +22,13 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
   const [isInstalling, setIsInstalling] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+
   const checkRequirements = async () => {
     setIsChecking(true);
     try {
       const result = await invoke<SystemStatus>('check_system_requirements');
+      if (!mountedRef.current) return;
       setStatus(result);
 
       if (result.claude_installed) {
@@ -34,11 +37,12 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
     } catch (error) {
       console.error('Failed to check requirements:', error);
     }
-    setIsChecking(false);
+    if (mountedRef.current) setIsChecking(false);
   };
 
   useEffect(() => {
     checkRequirements();
+    return () => { mountedRef.current = false; };
   }, []);
 
   const handleInstallClaude = async () => {
@@ -94,162 +98,130 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
       exit={{ opacity: 0 }}
       className="fixed inset-0 bg-bg-primary flex items-center justify-center z-50"
     >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-bg-elevated border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
-      >
+      <div className="bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-white/10 text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.2 }}
-            className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent-primary/20 flex items-center justify-center"
-          >
-            <Terminal size={32} className="text-accent-primary" />
-          </motion.div>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Welcome to ClaudeTerminal</h1>
-          <p className="text-text-secondary">Let's make sure everything is set up correctly</p>
+        <div className="p-6 border-b border-border text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-bg-surface flex items-center justify-center">
+            <Terminal size={24} className="text-text-secondary" />
+          </div>
+          <h1 className="text-xl font-semibold text-text-primary mb-1">Welcome to ClaudeTerminal</h1>
+          <p className="text-text-secondary text-[13px]">Let's make sure everything is set up correctly</p>
         </div>
 
         {/* Content */}
         <div className="p-6">
           {isChecking ? (
             <div className="flex flex-col items-center py-8">
-              <Loader2 size={48} className="text-accent-primary animate-spin mb-4" />
-              <p className="text-text-secondary">Checking system requirements...</p>
+              <Loader2 size={32} className="text-text-secondary animate-spin mb-4" />
+              <p className="text-text-tertiary text-[13px]">Checking system requirements...</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {steps.map((step, index) => {
+            <div className="space-y-3">
+              {steps.map((step) => {
                 const Icon = step.icon;
                 return (
-                  <motion.div
+                  <div
                     key={step.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`p-4 rounded-xl border transition-all ${
+                    className={`p-4 rounded-md ring-1 transition-all ${
                       step.installed
-                        ? 'bg-success/10 border-success/30'
-                        : 'bg-white/5 border-white/10'
+                        ? 'bg-success/5 ring-success/20'
+                        : 'bg-bg-primary ring-border'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                        step.installed ? 'bg-success/20' : 'bg-white/10'
+                      <div className={`w-10 h-10 rounded-md flex items-center justify-center ${
+                        step.installed ? 'bg-success/10' : 'bg-bg-secondary'
                       }`}>
-                        <Icon size={24} className={step.installed ? 'text-success' : 'text-text-secondary'} />
+                        <Icon size={20} className={step.installed ? 'text-success' : 'text-text-tertiary'} />
                       </div>
 
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-text-primary font-medium">{step.title}</h3>
+                          <h3 className="text-text-primary text-[13px] font-medium">{step.title}</h3>
                           {step.installed ? (
-                            <CheckCircle size={16} className="text-success" />
+                            <CheckCircle size={14} className="text-success" />
                           ) : (
-                            <XCircle size={16} className="text-error" />
+                            <XCircle size={14} className="text-error" />
                           )}
                         </div>
-                        <p className="text-text-secondary text-sm">{step.description}</p>
+                        <p className="text-text-tertiary text-[12px]">{step.description}</p>
                         {step.version && (
-                          <p className="text-accent-primary text-xs mt-1">Version: {step.version}</p>
+                          <p className="text-text-secondary text-[11px] mt-0.5">Version: {step.version}</p>
                         )}
                       </div>
 
                       {!step.installed && (
                         <div className="flex gap-2">
                           {step.canAutoInstall && (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                            <button
                               onClick={handleInstallClaude}
                               disabled={isInstalling}
-                              className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-4 rounded-lg text-sm font-medium disabled:opacity-50"
+                              className="flex items-center gap-2 bg-accent-primary hover:bg-accent-secondary text-white h-9 px-4 rounded-md text-[12px] font-medium disabled:opacity-50 transition-colors"
                             >
                               {isInstalling ? (
-                                <Loader2 size={16} className="animate-spin" />
+                                <Loader2 size={14} className="animate-spin" />
                               ) : (
-                                <Download size={16} />
+                                <Download size={14} />
                               )}
                               {isInstalling ? 'Installing...' : 'Install'}
-                            </motion.button>
+                            </button>
                           )}
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                          <button
                             onClick={() => openUrl(step.downloadUrl)}
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-text-primary py-2 px-4 rounded-lg text-sm font-medium"
+                            className="flex items-center gap-2 bg-bg-secondary ring-1 ring-border-light hover:bg-white/[0.04] text-text-primary h-9 px-4 rounded-md text-[12px] font-medium transition-colors"
                           >
-                            <ExternalLink size={16} />
+                            <ExternalLink size={14} />
                             Download
-                          </motion.button>
+                          </button>
                         </div>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
 
               {installError && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-xl bg-error/10 border border-error/30"
-                >
-                  <p className="text-error text-sm">
+                <div className="p-3 rounded-md bg-error/5 ring-1 ring-error/20">
+                  <p className="text-error text-[12px]">
                     <strong>Installation Error:</strong> {installError}
                   </p>
-                  <p className="text-text-secondary text-xs mt-2">
-                    Try running manually: <code className="bg-white/10 px-2 py-1 rounded">npm install -g @anthropic-ai/claude-code</code>
+                  <p className="text-text-tertiary text-[11px] mt-1.5">
+                    Try running manually: <code className="bg-bg-primary px-1.5 py-0.5 rounded text-[11px]">npm install -g @anthropic-ai/claude-code</code>
                   </p>
-                </motion.div>
+                </div>
               )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/10 flex justify-between items-center">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={checkRequirements}
+        <div className="p-4 border-t border-border flex justify-between items-center">
+          <button
+            onClick={() => checkRequirements()}
             disabled={isChecking}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary text-[12px] transition-colors"
           >
-            <RefreshCw size={16} className={isChecking ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={isChecking ? 'animate-spin' : ''} />
             Recheck
-          </motion.button>
+          </button>
 
           <AnimatePresence mode="wait">
             {allInstalled ? (
-              <motion.button
-                key="continue"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={onComplete}
-                className="flex items-center gap-2 bg-success hover:bg-success/90 text-white py-2 px-6 rounded-lg font-medium"
+                className="flex items-center gap-2 bg-success hover:bg-success/90 text-white h-9 px-5 rounded-md text-[13px] font-medium transition-colors"
               >
-                <CheckCircle size={18} />
+                <CheckCircle size={16} />
                 Get Started
-              </motion.button>
+              </button>
             ) : (
-              <motion.div
-                key="info"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-text-secondary text-sm"
-              >
+              <span className="text-text-tertiary text-[12px]">
                 Install missing requirements to continue
-              </motion.div>
+              </span>
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

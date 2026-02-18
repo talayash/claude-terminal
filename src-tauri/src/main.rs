@@ -50,6 +50,9 @@ fn main() {
             commands::get_hints,
             commands::save_workspace,
             commands::load_workspace,
+            commands::save_session_for_restore,
+            commands::get_last_session,
+            commands::clear_last_session,
             commands::check_system_requirements,
             commands::install_claude_code,
             commands::open_external_url,
@@ -59,7 +62,19 @@ fn main() {
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 let app_state = window.state::<AppState>();
                 let terminals = app_state.terminals.clone();
+                let db = app_state.db.clone();
                 tauri::async_runtime::block_on(async {
+                    // Read configs before closing (immutable lock)
+                    let configs = {
+                        let manager = terminals.lock().await;
+                        manager.get_all_configs()
+                    };
+                    // Save session to DB
+                    {
+                        let db = db.lock().await;
+                        let _ = db.save_last_session(&configs);
+                    }
+                    // Now close all terminals
                     let mut manager = terminals.lock().await;
                     manager.close_all();
                 });

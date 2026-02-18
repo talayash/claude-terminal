@@ -41,16 +41,21 @@ pub async fn create_terminal(
     let app_clone = app.clone();
     tokio::spawn(async move {
         while let Some((id, data)) = rx.recv().await {
-            let _ = app_clone.emit("terminal-output", serde_json::json!({
+            if let Err(e) = app_clone.emit("terminal-output", serde_json::json!({
                 "id": id,
                 "data": data,
-            }));
+            })) {
+                eprintln!("Failed to emit terminal-output: {}", e);
+                break;
+            }
         }
 
         // Terminal process exited — notify the frontend
-        let _ = app_clone.emit("terminal-finished", serde_json::json!({
+        if let Err(e) = app_clone.emit("terminal-finished", serde_json::json!({
             "id": terminal_id,
-        }));
+        })) {
+            eprintln!("Failed to emit terminal-finished: {}", e);
+        }
     });
 
     Ok(config)
@@ -137,6 +142,10 @@ pub async fn get_claude_version() -> Result<String, String> {
     let output = shell_command("claude", &["--version"])
         .output()
         .map_err(|e| e.to_string())?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
 
     String::from_utf8(output.stdout)
         .map(|s| s.trim().to_string())
@@ -343,4 +352,28 @@ pub async fn load_workspace(
 ) -> Result<Vec<crate::terminal::TerminalConfig>, String> {
     let db = state.db.lock().await;
     db.load_workspace(&name)
+}
+
+#[command]
+pub async fn save_session_for_restore(state: State<'_, AppState>) -> Result<(), String> {
+    let configs = {
+        let terminals = state.terminals.lock().await;
+        terminals.get_all_configs()
+    };
+    let db = state.db.lock().await;
+    db.save_last_session(&configs)
+}
+
+#[command]
+pub async fn get_last_session(
+    state: State<'_, AppState>,
+) -> Result<Option<Vec<crate::terminal::TerminalConfig>>, String> {
+    let db = state.db.lock().await;
+    db.load_last_session()
+}
+
+#[command]
+pub async fn clear_last_session(state: State<'_, AppState>) -> Result<(), String> {
+    let db = state.db.lock().await;
+    db.clear_last_session()
 }

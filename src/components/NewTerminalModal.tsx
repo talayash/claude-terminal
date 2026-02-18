@@ -37,6 +37,7 @@ export function NewTerminalModal() {
   const [workingDirectory, setWorkingDirectory] = useState('');
   const [claudeArgs, setClaudeArgs] = useState<string[]>(defaultClaudeArgs);
   const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfiles();
@@ -98,12 +99,28 @@ export function NewTerminalModal() {
   };
 
   const handleCreateTerminal = async () => {
+    setError(null);
+
+    // Validate working directory is not empty
+    if (!workingDirectory.trim()) {
+      setError('Working directory is required.');
+      return;
+    }
+
+    // Validate claude args don't contain shell metacharacters
+    const dangerousPattern = /[;&|`$(){}]/;
+    for (const arg of claudeArgs) {
+      if (dangerousPattern.test(arg)) {
+        setError(`Invalid character in argument: "${arg}". Remove shell metacharacters.`);
+        return;
+      }
+    }
+
     setIsCreating(true);
     try {
       const label = `Terminal ${terminals.size + 1}`;
       const colorTag = TAG_COLORS[terminals.size % TAG_COLORS.length];
 
-      // Create the terminal — claude is launched directly by the backend
       await createTerminal(
         label,
         workingDirectory,
@@ -114,9 +131,9 @@ export function NewTerminalModal() {
       );
 
       closeNewTerminalModal();
-    } catch (error) {
-      console.error('Failed to create terminal:', error);
-      alert('Failed to create terminal: ' + String(error));
+    } catch (err) {
+      console.error('Failed to create terminal:', err);
+      setError(String(err));
     } finally {
       setIsCreating(false);
     }
@@ -127,27 +144,29 @@ export function NewTerminalModal() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
       onClick={closeNewTerminalModal}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-bg-elevated border border-white/10 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden"
+        className="bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-2xl w-full max-w-lg overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Terminal size={20} className="text-accent-primary" />
-            <h2 className="text-text-primary text-lg font-semibold">New Terminal</h2>
+            <Terminal size={16} className="text-text-secondary" />
+            <h2 className="text-text-primary text-[14px] font-semibold">New Terminal</h2>
           </div>
           <button
             onClick={closeNewTerminalModal}
-            className="p-1 rounded-md hover:bg-white/10 text-text-secondary transition-colors"
+            className="p-1 rounded hover:bg-white/[0.06] text-text-tertiary transition-colors"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
@@ -155,48 +174,48 @@ export function NewTerminalModal() {
         <div className="p-4 space-y-4">
           {/* Nickname */}
           <div>
-            <label className="block text-text-secondary text-sm mb-1">
-              Nickname (for your reference)
+            <label className="block text-text-secondary text-[12px] mb-1.5">
+              Nickname
             </label>
             <input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              placeholder="e.g., My Project, Backend API, etc."
-              className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+              placeholder="e.g., My Project, Backend API"
+              className="w-full bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
             />
           </div>
 
           {/* Profile Selection */}
           {profiles.length > 0 && (
             <div>
-              <label className="block text-text-secondary text-sm mb-2">
-                Select Profile (optional)
+              <label className="block text-text-secondary text-[12px] mb-1.5">
+                Profile
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setSelectedProfileId(null)}
-                  className={`p-3 rounded-lg border text-left transition-colors ${
+                  className={`p-2.5 rounded-md text-left transition-colors ${
                     selectedProfileId === null
-                      ? 'bg-accent-primary/20 border-accent-primary/30'
-                      : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      ? 'bg-accent-primary/10 ring-1 ring-accent-primary/30'
+                      : 'bg-bg-primary ring-1 ring-border hover:ring-border-light'
                   }`}
                 >
-                  <p className="text-text-primary text-sm font-medium">No Profile</p>
-                  <p className="text-text-secondary text-xs">Use custom settings</p>
+                  <p className="text-text-primary text-[12px] font-medium">No Profile</p>
+                  <p className="text-text-tertiary text-[11px]">Custom settings</p>
                 </button>
                 {profiles.map((profile) => (
                   <button
                     key={profile.id}
                     onClick={() => setSelectedProfileId(profile.id)}
-                    className={`p-3 rounded-lg border text-left transition-colors ${
+                    className={`p-2.5 rounded-md text-left transition-colors ${
                       selectedProfileId === profile.id
-                        ? 'bg-accent-primary/20 border-accent-primary/30'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        ? 'bg-accent-primary/10 ring-1 ring-accent-primary/30'
+                        : 'bg-bg-primary ring-1 ring-border hover:ring-border-light'
                     }`}
                   >
-                    <p className="text-text-primary text-sm font-medium truncate">{profile.name}</p>
-                    <p className="text-text-secondary text-xs truncate">
+                    <p className="text-text-primary text-[12px] font-medium truncate">{profile.name}</p>
+                    <p className="text-text-tertiary text-[11px] truncate">
                       {profile.description || profile.working_directory || 'No description'}
                     </p>
                   </button>
@@ -207,7 +226,7 @@ export function NewTerminalModal() {
 
           {/* Working Directory */}
           <div>
-            <label className="block text-text-secondary text-sm mb-1">
+            <label className="block text-text-secondary text-[12px] mb-1.5">
               Working Directory
             </label>
             <div className="flex gap-2">
@@ -215,53 +234,56 @@ export function NewTerminalModal() {
                 type="text"
                 value={workingDirectory}
                 onChange={(e) => setWorkingDirectory(e.target.value)}
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+                className="flex-1 bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
                 placeholder="C:\path\to\project"
               />
               <button
                 onClick={handleBrowseDirectory}
-                className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                className="px-3 h-9 bg-bg-primary ring-1 ring-border-light rounded-md hover:bg-white/[0.04] transition-colors"
               >
-                <FolderOpen size={18} className="text-text-secondary" />
+                <FolderOpen size={16} className="text-text-secondary" />
               </button>
             </div>
           </div>
 
           {/* Claude Arguments */}
           <div>
-            <label className="block text-text-secondary text-sm mb-1">
+            <label className="block text-text-secondary text-[12px] mb-1.5">
               Claude Arguments (one per line)
             </label>
             <textarea
               value={claudeArgs.join('\n')}
               onChange={(e) => setClaudeArgs(e.target.value.split('\n').filter(Boolean))}
-              className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50 font-mono h-20 resize-none"
+              className="w-full bg-bg-primary ring-1 ring-border-light rounded-md py-2 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary font-mono h-20 resize-none transition-colors"
               placeholder="--dangerously-skip-permissions&#10;--model opus"
             />
-            <p className="text-text-secondary text-xs mt-1">
-              Terminal will auto-start with: <code className="text-accent-primary">claude {claudeArgs.join(' ')}</code>
+            <p className="text-text-tertiary text-[11px] mt-1">
+              Command: <code className="text-text-secondary">claude {claudeArgs.join(' ')}</code>
             </p>
           </div>
+          {error && (
+            <div className="p-3 rounded-md bg-error/5 ring-1 ring-error/20">
+              <p className="text-error text-[12px]">{error}</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-4 border-t border-white/10">
+        <div className="flex justify-end gap-2 p-3 border-t border-border">
           <button
             onClick={closeNewTerminalModal}
-            className="px-4 py-2 text-text-secondary hover:text-text-primary hover:bg-white/5 rounded-lg text-sm transition-colors"
+            className="px-4 h-9 text-text-secondary hover:text-text-primary hover:bg-white/[0.04] rounded-md text-[13px] transition-colors"
           >
             Cancel
           </button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleCreateTerminal}
             disabled={isCreating || !workingDirectory}
-            className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 bg-accent-primary hover:bg-accent-secondary disabled:opacity-50 disabled:cursor-not-allowed text-white h-9 px-4 rounded-md text-[13px] font-medium transition-colors"
           >
-            <Zap size={16} />
+            <Zap size={14} />
             {isCreating ? 'Creating...' : 'Start Terminal'}
-          </motion.button>
+          </button>
         </div>
       </motion.div>
     </motion.div>

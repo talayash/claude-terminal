@@ -27,20 +27,20 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
 
     const terminal = new Terminal({
       theme: {
-        background: '#0D0D0D',
-        foreground: '#FFFFFF',
-        cursor: '#E94560',
-        cursorAccent: '#0D0D0D',
-        selectionBackground: 'rgba(233, 69, 96, 0.3)',
-        black: '#1A1A2E',
+        background: '#101010',
+        foreground: '#E5E5E5',
+        cursor: '#E5E5E5',
+        cursorAccent: '#101010',
+        selectionBackground: 'rgba(59, 130, 246, 0.25)',
+        black: '#171717',
         red: '#EF4444',
         green: '#4ADE80',
         yellow: '#FBBF24',
         blue: '#3B82F6',
         magenta: '#A855F7',
         cyan: '#22D3EE',
-        white: '#FFFFFF',
-        brightBlack: '#4B5563',
+        white: '#E5E5E5',
+        brightBlack: '#525252',
         brightRed: '#F87171',
         brightGreen: '#86EFAC',
         brightYellow: '#FDE047',
@@ -53,7 +53,7 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
       fontSize: 14,
       lineHeight: 1.2,
       cursorBlink: true,
-      cursorStyle: 'block',
+      cursorStyle: 'bar',
       cursorWidth: 2,
       allowProposedApi: true,
     });
@@ -135,7 +135,6 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
       <div
         ref={containerRef}
         className="h-full w-full"
-        style={{ padding: '8px' }}
       />
     </div>
   );

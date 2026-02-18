@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState, memo, useCallback, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { X, Maximize2, Minimize2, Plus, Grid3X3, LayoutGrid, Columns, Rows, Square } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore, GridLayout, getOptimalLayout } from '../store/appStore';
@@ -37,61 +37,54 @@ interface TerminalCellProps {
   onMaximize: () => void;
 }
 
-function TerminalCell({ terminalId, index, isFocused, onFocus, onRemove, onMaximize }: TerminalCellProps) {
+const TerminalCell = memo(function TerminalCell({ terminalId, isFocused, onFocus, onRemove, onMaximize }: TerminalCellProps) {
   const { terminals } = useTerminalStore();
   const terminal = terminals.get(terminalId);
 
   if (!terminal) {
     return (
-      <div className="h-full flex items-center justify-center bg-bg-secondary/30 border border-white/5 rounded-lg">
-        <p className="text-text-secondary text-sm">Terminal not found</p>
+      <div className="h-full flex items-center justify-center bg-bg-secondary border border-border rounded">
+        <p className="text-text-tertiary text-[12px]">Terminal not found</p>
       </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      className={`relative h-full flex flex-col rounded-lg overflow-hidden border transition-all ${
+    <div
+      className={`relative h-full flex flex-col rounded overflow-hidden transition-all ${
         isFocused
-          ? 'border-accent-primary shadow-lg shadow-accent-primary/20'
-          : 'border-white/10 hover:border-white/20'
+          ? 'ring-2 ring-accent-primary'
+          : 'ring-1 ring-border hover:ring-border-light'
       }`}
       onClick={onFocus}
     >
       {/* Cell Header */}
-      <div className={`flex items-center justify-between px-2 py-1 bg-bg-secondary/80 border-b ${
-        isFocused ? 'border-accent-primary/30' : 'border-white/5'
+      <div className={`flex items-center justify-between px-3 h-6 bg-bg-secondary border-b ${
+        isFocused ? 'border-accent-primary/30' : 'border-border'
       }`}>
-        <div className="flex items-center gap-2 min-w-0">
-          <div className={`w-2 h-2 rounded-full ${terminal.config.color_tag || 'bg-accent-primary'}`} />
-          <span className="text-xs text-text-primary truncate font-medium">
-            {terminal.config.nickname || terminal.config.label}
-          </span>
-          <span className="text-xs text-text-secondary">#{index + 1}</span>
-        </div>
-        <div className="flex items-center gap-1">
+        <span className="text-[11px] text-text-secondary truncate font-medium">
+          {terminal.config.nickname || terminal.config.label}
+        </span>
+        <div className="flex items-center gap-0.5">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onMaximize();
             }}
-            className="p-1 rounded hover:bg-white/10 text-text-secondary hover:text-text-primary transition-colors"
+            className="p-0.5 rounded hover:bg-white/[0.06] text-text-tertiary hover:text-text-secondary transition-colors"
             title="Maximize"
           >
-            <Maximize2 size={12} />
+            <Maximize2 size={10} />
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onRemove();
             }}
-            className="p-1 rounded hover:bg-error/20 text-text-secondary hover:text-error transition-colors"
+            className="p-0.5 rounded hover:bg-red-500/10 text-text-tertiary hover:text-red-400 transition-colors"
             title="Remove from grid"
           >
-            <X size={12} />
+            <X size={10} />
           </button>
         </div>
       </div>
@@ -100,29 +93,27 @@ function TerminalCell({ terminalId, index, isFocused, onFocus, onRemove, onMaxim
       <div className="flex-1 overflow-hidden">
         <TerminalView terminalId={terminalId} />
       </div>
-    </motion.div>
+    </div>
   );
-}
+});
 
 function AddTerminalCell() {
   const { terminals } = useTerminalStore();
   const { gridTerminalIds, openNewTerminalModal, addToGrid } = useAppStore();
   const [showPicker, setShowPicker] = useState(false);
 
-  const availableTerminals = Array.from(terminals.values())
-    .filter(t => !gridTerminalIds.includes(t.config.id));
+  const availableTerminals = useMemo(() =>
+    Array.from(terminals.values())
+      .filter(t => !gridTerminalIds.includes(t.config.id)),
+    [terminals, gridTerminalIds]
+  );
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="h-full flex flex-col items-center justify-center bg-bg-secondary/20 border border-dashed border-white/10 rounded-lg hover:border-accent-primary/50 transition-colors cursor-pointer group relative"
+    <div
+      className="h-full flex flex-col items-center justify-center bg-[#131313] rounded ring-1 ring-border hover:ring-border-light transition-colors cursor-pointer group relative"
       onClick={() => setShowPicker(true)}
     >
-      <Plus size={32} className="text-text-secondary group-hover:text-accent-primary transition-colors" />
-      <p className="text-text-secondary text-sm mt-2 group-hover:text-text-primary transition-colors">
-        Add Terminal
-      </p>
+      <Plus size={24} className="text-border-light group-hover:text-text-tertiary transition-colors" />
 
       {/* Terminal Picker Dropdown */}
       <AnimatePresence>
@@ -135,16 +126,13 @@ function AddTerminalCell() {
                 setShowPicker(false);
               }}
             />
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute z-50 bg-bg-elevated border border-white/10 rounded-lg shadow-xl p-2 min-w-[200px]"
+            <div
+              className="absolute z-50 bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-xl p-2 min-w-[200px]"
               onClick={(e) => e.stopPropagation()}
             >
-              <p className="text-text-secondary text-xs px-2 py-1 mb-1">Select Terminal</p>
+              <p className="text-text-tertiary text-[11px] px-2 py-1 mb-1">Select Terminal</p>
               {availableTerminals.length > 0 ? (
-                <div className="max-h-48 overflow-y-auto space-y-1">
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
                   {availableTerminals.map((t) => (
                     <button
                       key={t.config.id}
@@ -152,35 +140,34 @@ function AddTerminalCell() {
                         addToGrid(t.config.id);
                         setShowPicker(false);
                       }}
-                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/10 text-left"
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/[0.06] text-left"
                     >
-                      <div className={`w-2 h-2 rounded-full ${t.config.color_tag || 'bg-accent-primary'}`} />
-                      <span className="text-text-primary text-sm truncate">
+                      <span className="text-text-primary text-[12px] truncate">
                         {t.config.nickname || t.config.label}
                       </span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-text-secondary text-xs px-2 py-2">No available terminals</p>
+                <p className="text-text-tertiary text-[11px] px-2 py-2">No available terminals</p>
               )}
-              <div className="border-t border-white/10 mt-2 pt-2">
+              <div className="border-t border-border mt-2 pt-2">
                 <button
                   onClick={() => {
                     openNewTerminalModal();
                     setShowPicker(false);
                   }}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent-primary/20 text-accent-primary text-sm"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent-primary/10 text-accent-primary text-[12px]"
                 >
                   <Plus size={14} />
                   Create New Terminal
                 </button>
               </div>
-            </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
@@ -233,34 +220,34 @@ export function TerminalGrid() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gridFocusedIndex, config, gridTerminalIds.length, setGridFocusedIndex]);
 
-  const handleMaximize = (terminalId: string) => {
+  const handleMaximize = useCallback((terminalId: string) => {
     setActiveTerminal(terminalId);
     setGridMode(false);
-  };
+  }, [setActiveTerminal, setGridMode]);
 
   return (
     <div className="h-full flex flex-col">
       {/* Grid Toolbar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-bg-secondary/30 border-b border-white/5">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-bg-secondary border-b border-border">
         <div className="flex items-center gap-2">
-          <Grid3X3 size={16} className="text-accent-primary" />
-          <span className="text-text-primary text-sm font-medium">Grid View</span>
-          <span className="text-text-secondary text-xs">
-            ({gridTerminalIds.length}/8 terminals)
+          <Grid3X3 size={14} className="text-text-secondary" />
+          <span className="text-text-primary text-[12px] font-medium">Grid View</span>
+          <span className="text-text-tertiary text-[11px]">
+            ({gridTerminalIds.length}/8)
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Layout Selector */}
-          <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <div className="flex items-center gap-0.5 bg-bg-primary rounded-md p-0.5">
             {LAYOUT_OPTIONS.map((option) => (
               <button
                 key={option.layout}
                 onClick={() => setGridLayout(option.layout)}
-                className={`p-1.5 rounded transition-colors ${
+                className={`p-1 rounded transition-colors ${
                   gridLayout === option.layout
                     ? 'bg-accent-primary text-white'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-white/10'
+                    : 'text-text-tertiary hover:text-text-secondary hover:bg-white/[0.04]'
                 }`}
                 title={option.label}
               >
@@ -272,7 +259,7 @@ export function TerminalGrid() {
           {/* Auto Layout Button */}
           <button
             onClick={() => setGridLayout(getOptimalLayout(gridTerminalIds.length))}
-            className="px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-white/10 rounded transition-colors"
+            className="px-2 py-1 text-[11px] text-text-secondary hover:text-text-primary hover:bg-white/[0.04] rounded transition-colors"
             title="Auto-fit layout"
           >
             Auto
@@ -281,7 +268,7 @@ export function TerminalGrid() {
           {/* Exit Grid Mode */}
           <button
             onClick={() => setGridMode(false)}
-            className="flex items-center gap-1 px-2 py-1 text-xs text-text-secondary hover:text-text-primary hover:bg-white/10 rounded transition-colors"
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-text-secondary hover:text-text-primary hover:bg-white/[0.04] rounded transition-colors"
           >
             <Minimize2 size={12} />
             Exit Grid
@@ -292,12 +279,12 @@ export function TerminalGrid() {
       {/* Grid Container */}
       <div
         ref={containerRef}
-        className="flex-1 p-2 overflow-hidden"
+        className="flex-1 p-1 overflow-hidden"
         style={{
           display: 'grid',
           gridTemplateColumns: `repeat(${config.cols}, 1fr)`,
           gridTemplateRows: `repeat(${config.rows}, 1fr)`,
-          gap: '8px',
+          gap: '4px',
         }}
       >
         <AnimatePresence mode="popLayout">
@@ -325,9 +312,8 @@ export function TerminalGrid() {
       {gridTerminalIds.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <Grid3X3 size={48} className="text-text-secondary/30 mx-auto mb-4" />
-            <p className="text-text-secondary text-sm">Click the + cells to add terminals to the grid</p>
-            <p className="text-text-secondary/70 text-xs mt-1">Supports up to 8 terminals</p>
+            <Grid3X3 size={32} className="text-border mx-auto mb-3" />
+            <p className="text-text-tertiary text-[12px]">Click + to add terminals to the grid</p>
           </div>
         </div>
       )}

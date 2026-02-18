@@ -34,8 +34,12 @@ export function ProfileModal() {
   }, [editingProfileId, profiles]);
 
   const loadProfiles = async () => {
-    const loadedProfiles = await invoke<ConfigProfile[]>('get_profiles');
-    setProfiles(loadedProfiles);
+    try {
+      const loadedProfiles = await invoke<ConfigProfile[]>('get_profiles');
+      setProfiles(loadedProfiles);
+    } catch (err) {
+      console.error('Failed to load profiles:', err);
+    }
   };
 
   const handleCreateProfile = () => {
@@ -87,40 +91,42 @@ export function ProfileModal() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"
       onClick={closeProfileModal}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-bg-elevated border border-white/10 rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden"
+        className="bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-2xl w-full max-w-3xl overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
-          <h2 className="text-text-primary text-lg font-semibold">Configuration Profiles</h2>
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-text-primary text-[14px] font-semibold">Configuration Profiles</h2>
           <button
             onClick={closeProfileModal}
-            className="p-1 rounded-md hover:bg-white/10 text-text-secondary transition-colors"
+            className="p-1 rounded hover:bg-white/[0.06] text-text-tertiary transition-colors"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Content */}
         <div className="flex h-[500px]">
           {/* Profile List */}
-          <div className="w-64 border-r border-white/10 p-3 flex flex-col">
+          <div className="w-64 border-r border-border p-3 flex flex-col">
             <button
               onClick={handleCreateProfile}
-              className="flex items-center gap-2 w-full bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-3 rounded-lg text-sm font-medium mb-3"
+              className="flex items-center gap-2 w-full bg-accent-primary hover:bg-accent-secondary text-white py-2 px-3 rounded-md text-[12px] font-medium mb-3 transition-colors"
             >
-              <Plus size={16} />
+              <Plus size={14} />
               New Profile
             </button>
 
-            <div className="flex-1 overflow-y-auto space-y-1">
+            <div className="flex-1 overflow-y-auto space-y-0.5">
               {profiles.map((profile) => (
                 <div
                   key={profile.id}
@@ -128,19 +134,19 @@ export function ProfileModal() {
                     setSelectedProfile(profile);
                     setIsCreating(false);
                   }}
-                  className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                  className={`p-2 rounded-md cursor-pointer transition-colors ${
                     selectedProfile?.id === profile.id
-                      ? 'bg-accent-primary/20 border border-accent-primary/30'
-                      : 'hover:bg-white/5'
+                      ? 'bg-accent-primary/10 ring-1 ring-accent-primary/30'
+                      : 'hover:bg-white/[0.04]'
                   }`}
                 >
-                  <p className="text-text-primary text-sm font-medium truncate">{profile.name}</p>
-                  <p className="text-text-secondary text-xs truncate">{profile.description || 'No description'}</p>
+                  <p className="text-text-primary text-[12px] font-medium truncate">{profile.name}</p>
+                  <p className="text-text-tertiary text-[11px] truncate">{profile.description || 'No description'}</p>
                 </div>
               ))}
 
               {profiles.length === 0 && (
-                <p className="text-text-secondary text-sm text-center py-4">
+                <p className="text-text-tertiary text-[12px] text-center py-4">
                   No profiles yet
                 </p>
               )}
@@ -152,52 +158,52 @@ export function ProfileModal() {
             {selectedProfile ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-text-secondary text-sm mb-1">Name</label>
+                  <label className="block text-text-secondary text-[12px] mb-1.5">Name</label>
                   <input
                     type="text"
                     value={selectedProfile.name}
                     onChange={(e) => setSelectedProfile({ ...selectedProfile, name: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+                    className="w-full bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-text-secondary text-sm mb-1">Description</label>
+                  <label className="block text-text-secondary text-[12px] mb-1.5">Description</label>
                   <input
                     type="text"
                     value={selectedProfile.description || ''}
                     onChange={(e) => setSelectedProfile({ ...selectedProfile, description: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+                    className="w-full bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
                     placeholder="Optional description"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-text-secondary text-sm mb-1">Working Directory</label>
+                  <label className="block text-text-secondary text-[12px] mb-1.5">Working Directory</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={selectedProfile.working_directory}
                       onChange={(e) => setSelectedProfile({ ...selectedProfile, working_directory: e.target.value })}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50"
+                      className="flex-1 bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
                       placeholder="C:\path\to\project"
                     />
                     <button
                       onClick={handleBrowseDirectory}
-                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                      className="px-3 h-9 bg-bg-primary ring-1 ring-border-light rounded-md hover:bg-white/[0.04] transition-colors"
                       title="Browse for directory"
                     >
-                      <FolderOpen size={18} className="text-text-secondary" />
+                      <FolderOpen size={16} className="text-text-secondary" />
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-text-secondary text-sm mb-1">Claude Arguments (one per line)</label>
+                  <label className="block text-text-secondary text-[12px] mb-1.5">Claude Arguments (one per line)</label>
                   <textarea
                     value={selectedProfile.claude_args.join('\n')}
                     onChange={(e) => setSelectedProfile({ ...selectedProfile, claude_args: e.target.value.split('\n').filter(Boolean) })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2 px-3 text-text-primary text-sm focus:outline-none focus:border-accent-primary/50 font-mono h-24 resize-none"
+                    className="w-full bg-bg-primary ring-1 ring-border-light rounded-md py-2 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary font-mono h-24 resize-none transition-colors"
                     placeholder="--model opus&#10;--verbose"
                   />
                 </div>
@@ -208,37 +214,33 @@ export function ProfileModal() {
                     id="is_default"
                     checked={selectedProfile.is_default}
                     onChange={(e) => setSelectedProfile({ ...selectedProfile, is_default: e.target.checked })}
-                    className="rounded border-white/20 bg-white/5 text-accent-primary focus:ring-accent-primary"
+                    className="rounded border-border-light bg-bg-primary text-accent-primary focus:ring-accent-primary"
                   />
-                  <label htmlFor="is_default" className="text-text-primary text-sm">Set as default profile</label>
+                  <label htmlFor="is_default" className="text-text-primary text-[13px]">Set as default profile</label>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-white/10">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  <button
                     onClick={handleSaveProfile}
-                    className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-4 rounded-lg text-sm font-medium"
+                    className="flex items-center gap-2 bg-accent-primary hover:bg-accent-secondary text-white h-9 px-4 rounded-md text-[13px] font-medium transition-colors"
                   >
-                    <Save size={16} />
+                    <Save size={14} />
                     Save Profile
-                  </motion.button>
+                  </button>
 
                   {!isCreating && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button
                       onClick={() => handleDeleteProfile(selectedProfile.id)}
-                      className="flex items-center gap-2 bg-error/20 hover:bg-error/30 text-error py-2 px-4 rounded-lg text-sm font-medium"
+                      className="flex items-center gap-2 text-red-400 hover:bg-red-500/10 h-9 px-4 rounded-md text-[13px] font-medium transition-colors"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={14} />
                       Delete
-                    </motion.button>
+                    </button>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="h-full flex items-center justify-center text-text-secondary">
+              <div className="h-full flex items-center justify-center text-text-tertiary text-[13px]">
                 Select a profile or create a new one
               </div>
             )}

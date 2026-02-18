@@ -83,13 +83,18 @@ impl TerminalManager {
         #[cfg(not(target_os = "windows"))]
         let mut cmd = {
             let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+            // Validate shell path exists to prevent execution of arbitrary binaries
+            if !std::path::Path::new(&shell).exists() {
+                return Err(format!("Shell not found: {}", shell));
+            }
             let mut c = CommandBuilder::new(shell);
-            let claude_cmd = std::iter::once("claude".to_string())
-                .chain(claude_args.iter().cloned())
-                .collect::<Vec<_>>()
-                .join(" ");
+            // Pass each argument individually to prevent command injection
+            // (instead of joining into a single string that gets shell-interpreted)
             c.arg("-ic");
-            c.arg(claude_cmd);
+            c.arg("claude");
+            for arg in &claude_args {
+                c.arg(arg);
+            }
             c
         };
 
@@ -114,7 +119,7 @@ impl TerminalManager {
             nickname,
             profile_id: None,
             working_directory,
-            claude_args: claude_args.clone(),
+            claude_args,
             env_vars,
             created_at: Utc::now(),
             status: TerminalStatus::Running,
@@ -141,6 +146,11 @@ impl TerminalManager {
                     }
                     Err(e) => {
                         eprintln!("Error reading from pty: {}", e);
+                        // Send error message to frontend so the terminal shows the failure
+                        let _ = tx.blocking_send((
+                            terminal_id.clone(),
+                            format!("\r\n[Error reading from terminal: {}]\r\n", e).into_bytes(),
+                        ));
                         break;
                     }
                 }

@@ -1,72 +1,92 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
 import { useTerminalStore } from '../store/terminalStore';
 
 export function useKeyboardShortcuts() {
-  const { toggleSidebar, toggleHints, openSettings, openNewTerminalModal, toggleGridMode, addToGrid, gridMode } = useAppStore();
-  const { terminals, activeTerminalId, setActiveTerminal, closeTerminal } = useTerminalStore();
+  // Use refs for values that change frequently to avoid re-registering the listener
+  const terminalsRef = useRef(useTerminalStore.getState().terminals);
+  const activeIdRef = useRef(useTerminalStore.getState().activeTerminalId);
+  const gridModeRef = useRef(useAppStore.getState().gridMode);
 
   useEffect(() => {
-    const handleKeyDown = async (e: KeyboardEvent) => {
+    const unsubTerminal = useTerminalStore.subscribe((state) => {
+      terminalsRef.current = state.terminals;
+      activeIdRef.current = state.activeTerminalId;
+    });
+    const unsubApp = useAppStore.subscribe((state) => {
+      gridModeRef.current = state.gridMode;
+    });
+    return () => {
+      unsubTerminal();
+      unsubApp();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
       const shift = e.shiftKey;
 
       if (ctrl && shift && e.key === 'N') {
         e.preventDefault();
-        openNewTerminalModal();
+        useAppStore.getState().openNewTerminalModal();
       }
 
       // Ctrl+Shift+F is handled inside TerminalView for search
 
       if (ctrl && e.key === 'b') {
         e.preventDefault();
-        toggleSidebar();
+        useAppStore.getState().toggleSidebar();
       }
 
       if (ctrl && e.key === 'w') {
         e.preventDefault();
-        if (activeTerminalId) closeTerminal(activeTerminalId);
+        const activeId = activeIdRef.current;
+        if (activeId) useTerminalStore.getState().closeTerminal(activeId);
       }
 
       if (ctrl && e.key === ',') {
         e.preventDefault();
-        openSettings();
+        useAppStore.getState().openSettings();
       }
 
       if (e.key === 'F1') {
         e.preventDefault();
-        toggleHints();
+        useAppStore.getState().toggleHints();
       }
 
       // Toggle Grid Mode: Ctrl+G
       if (ctrl && e.key === 'g') {
         e.preventDefault();
-        toggleGridMode();
+        useAppStore.getState().toggleGridMode();
       }
 
       // Add current terminal to grid: Ctrl+Shift+G
       if (ctrl && shift && e.key === 'G') {
         e.preventDefault();
-        if (activeTerminalId) {
-          addToGrid(activeTerminalId);
-          if (!gridMode) toggleGridMode();
+        const activeId = activeIdRef.current;
+        if (activeId) {
+          useAppStore.getState().addToGrid(activeId);
+          if (!gridModeRef.current) useAppStore.getState().toggleGridMode();
         }
       }
 
       if (ctrl && e.key === 'Tab') {
         e.preventDefault();
+        const terminals = terminalsRef.current;
+        const activeId = activeIdRef.current;
         const terminalIds = Array.from(terminals.keys());
-        if (terminalIds.length > 0 && activeTerminalId) {
-          const currentIndex = terminalIds.indexOf(activeTerminalId);
+        if (terminalIds.length > 0 && activeId) {
+          const currentIndex = terminalIds.indexOf(activeId);
           const nextIndex = shift
             ? (currentIndex - 1 + terminalIds.length) % terminalIds.length
             : (currentIndex + 1) % terminalIds.length;
-          setActiveTerminal(terminalIds[nextIndex]);
+          useTerminalStore.getState().setActiveTerminal(terminalIds[nextIndex]);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [terminals, activeTerminalId, toggleSidebar, toggleHints, openSettings, openNewTerminalModal, setActiveTerminal, closeTerminal, toggleGridMode, addToGrid, gridMode]);
+  }, []);
 }

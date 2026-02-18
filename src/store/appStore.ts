@@ -12,6 +12,7 @@ interface AppState {
   newTerminalModalOpen: boolean;
   defaultClaudeArgs: string[];
   notifyOnFinish: boolean;
+  restoreSession: boolean;
 
   // Grid state
   gridMode: boolean;
@@ -29,6 +30,7 @@ interface AppState {
   closeNewTerminalModal: () => void;
   setDefaultClaudeArgs: (args: string[]) => void;
   setNotifyOnFinish: (enabled: boolean) => void;
+  setRestoreSession: (enabled: boolean) => void;
 
   // Grid actions
   toggleGridMode: () => void;
@@ -67,6 +69,7 @@ export const useAppStore = create<AppState>()(
       newTerminalModalOpen: false,
       defaultClaudeArgs: ['--dangerously-skip-permissions'],
       notifyOnFinish: true,
+      restoreSession: true,
 
       // Grid state
       gridMode: false,
@@ -84,6 +87,7 @@ export const useAppStore = create<AppState>()(
       closeNewTerminalModal: () => set({ newTerminalModalOpen: false }),
       setDefaultClaudeArgs: (args) => set({ defaultClaudeArgs: args }),
       setNotifyOnFinish: (enabled) => set({ notifyOnFinish: enabled }),
+      setRestoreSession: (enabled) => set({ restoreSession: enabled }),
 
       // Grid actions
       toggleGridMode: () => set((state) => ({ gridMode: !state.gridMode })),
@@ -127,6 +131,7 @@ export const useAppStore = create<AppState>()(
         hintsOpen: state.hintsOpen,
         defaultClaudeArgs: state.defaultClaudeArgs,
         notifyOnFinish: state.notifyOnFinish,
+        restoreSession: state.restoreSession,
       }),
     }
   )

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3 } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
@@ -8,7 +8,14 @@ const STATUS_COLORS = {
   Running: 'bg-success',
   Idle: 'bg-warning',
   Error: 'bg-error',
-  Stopped: 'bg-text-secondary',
+  Stopped: 'bg-text-tertiary',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  Running: 'running',
+  Idle: 'idle',
+  Error: 'error',
+  Stopped: 'stopped',
 };
 
 export function Sidebar() {
@@ -20,13 +27,16 @@ export function Sidebar() {
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname, unreadTerminalIds } = useTerminalStore();
   const { openProfileModal, openNewTerminalModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
 
-  const terminalList = Array.from(terminals.values())
-    .map(t => t.config)
-    .filter(t => {
-      const searchLower = search.toLowerCase();
-      return t.label.toLowerCase().includes(searchLower) ||
-        (t.nickname && t.nickname.toLowerCase().includes(searchLower));
-    });
+  const terminalList = useMemo(() =>
+    Array.from(terminals.values())
+      .map(t => t.config)
+      .filter(t => {
+        const searchLower = search.toLowerCase();
+        return t.label.toLowerCase().includes(searchLower) ||
+          (t.nickname && t.nickname.toLowerCase().includes(searchLower));
+      }),
+    [terminals, search]
+  );
 
   const handleNewTerminal = () => {
     openNewTerminalModal();
@@ -43,129 +53,121 @@ export function Sidebar() {
   };
 
   return (
-    <div className="h-full bg-bg-secondary/50 backdrop-blur-md border-r border-white/5 flex flex-col">
+    <div className="h-full bg-bg-secondary border-r border-border flex flex-col">
       {/* Header */}
-      <div className="p-3 border-b border-white/5">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+      <div className="p-3 border-b border-border">
+        <button
           onClick={handleNewTerminal}
-          className="w-full flex items-center justify-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-white py-2 px-4 rounded-lg font-medium text-sm transition-colors"
+          className="w-full flex items-center justify-center gap-2 bg-accent-primary hover:bg-accent-secondary text-white py-2 px-4 rounded-md font-medium text-[13px] transition-colors"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           New Terminal
-        </motion.button>
+        </button>
 
         <div className="mt-3 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" />
           <input
             type="text"
-            placeholder="Search terminals..."
+            placeholder="Filter terminals..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent-primary/50 transition-colors"
+            className="w-full bg-bg-primary ring-1 ring-border-light rounded-md py-1.5 pl-8 pr-3 text-[12px] text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-accent-primary transition-colors"
           />
         </div>
       </div>
 
       {/* Terminal List */}
-      <div className="flex-1 overflow-y-auto p-2">
-        <AnimatePresence mode="popLayout">
-          {terminalList.map((terminal) => (
-            <motion.div
-              key={terminal.id}
-              layout
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              onClick={() => setActiveTerminal(terminal.id)}
-              className={`group relative p-3 rounded-lg mb-2 cursor-pointer transition-all ${
-                activeTerminalId === terminal.id
-                  ? 'bg-accent-primary/20 border border-accent-primary/30'
-                  : 'hover:bg-white/5 border border-transparent'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {/* Color Tag & Grid Indicator */}
-                <div className="relative">
-                  <div className={`w-1 h-8 rounded-full ${terminal.color_tag || 'bg-accent-primary'}`} />
-                  {gridTerminalIds.includes(terminal.id) && (
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-accent-primary rounded-full flex items-center justify-center">
-                      <Grid3X3 size={6} className="text-white" />
-                    </div>
-                  )}
-                </div>
+      <div className="flex-1 overflow-y-auto p-1.5">
+        {terminalList.map((terminal) => (
+          <div
+            key={terminal.id}
+            onClick={() => setActiveTerminal(terminal.id)}
+            className={`group relative py-2.5 px-3 rounded-md mb-0.5 cursor-pointer transition-colors ${
+              activeTerminalId === terminal.id
+                ? 'bg-white/[0.06] border-l-2 border-l-accent-primary'
+                : 'hover:bg-white/[0.04] border-l-2 border-l-transparent'
+            }`}
+          >
+            <div className="flex items-start gap-2.5">
+              {/* Status & Unread */}
+              <div className="mt-1.5 relative flex-shrink-0">
+                <div className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[terminal.status]}`} />
+                {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
+                  <div className="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                )}
+              </div>
 
-                {/* Status Indicator */}
-                <div className="relative">
-                  <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[terminal.status]} ${
-                    terminal.status === 'Running' ? 'animate-pulse' : ''
-                  }`} />
-                  {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent-primary animate-activity-pulse" />
-                  )}
-                </div>
-
-                {/* Label & Nickname */}
-                <div className="flex-1 min-w-0">
-                  {editingId === terminal.id ? (
-                    <input
-                      autoFocus
-                      defaultValue={terminal.label}
-                      onBlur={(e) => handleRename(terminal.id, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRename(terminal.id, e.currentTarget.value);
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      className="w-full bg-transparent border-b border-accent-primary text-text-primary text-sm focus:outline-none"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : editingNicknameId === terminal.id ? (
-                    <input
-                      autoFocus
-                      defaultValue={terminal.nickname || ''}
-                      placeholder="Enter nickname..."
-                      onBlur={(e) => handleNicknameChange(terminal.id, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleNicknameChange(terminal.id, e.currentTarget.value);
-                        if (e.key === 'Escape') setEditingNicknameId(null);
-                      }}
-                      className="w-full bg-transparent border-b border-accent-primary text-text-primary text-sm focus:outline-none"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  ) : (
-                    <>
-                      {terminal.nickname && (
-                        <p className="text-accent-primary text-sm font-semibold truncate">{terminal.nickname}</p>
-                      )}
-                      <p className={`text-text-primary text-sm ${terminal.nickname ? 'text-xs text-text-secondary' : 'font-medium'} truncate`}>
-                        {terminal.label}
-                      </p>
-                      <p className="text-text-secondary text-xs truncate">{terminal.working_directory}</p>
-                    </>
-                  )}
-                </div>
-
-                {/* Actions Menu */}
-                <div className="relative">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpenId(menuOpenId === terminal.id ? null : terminal.id);
+              {/* Label & Info */}
+              <div className="flex-1 min-w-0">
+                {editingId === terminal.id ? (
+                  <input
+                    autoFocus
+                    defaultValue={terminal.label}
+                    onBlur={(e) => handleRename(terminal.id, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRename(terminal.id, e.currentTarget.value);
+                      if (e.key === 'Escape') setEditingId(null);
                     }}
-                    className="p-1 rounded hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <MoreVertical size={14} className="text-text-secondary" />
-                  </button>
+                    className="w-full bg-transparent border-b border-accent-primary text-text-primary text-[12px] focus:outline-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : editingNicknameId === terminal.id ? (
+                  <input
+                    autoFocus
+                    defaultValue={terminal.nickname || ''}
+                    placeholder="Enter nickname..."
+                    onBlur={(e) => handleNicknameChange(terminal.id, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleNicknameChange(terminal.id, e.currentTarget.value);
+                      if (e.key === 'Escape') setEditingNicknameId(null);
+                    }}
+                    className="w-full bg-transparent border-b border-accent-primary text-text-primary text-[12px] focus:outline-none"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <p className="text-text-primary text-[12px] font-medium truncate">
+                        {terminal.nickname || terminal.label}
+                      </p>
+                      <span className={`text-[11px] ${
+                        terminal.status === 'Running' ? 'text-success' :
+                        terminal.status === 'Error' ? 'text-error' :
+                        'text-text-tertiary'
+                      }`}>
+                        {STATUS_LABELS[terminal.status]}
+                      </span>
+                    </div>
+                    <p className="text-text-tertiary text-[11px] truncate mt-0.5">
+                      {terminal.working_directory}
+                    </p>
+                  </>
+                )}
+              </div>
 
-                  <AnimatePresence>
-                    {menuOpenId === terminal.id && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="absolute right-0 top-full mt-1 bg-bg-elevated border border-white/10 rounded-lg shadow-xl py-1 min-w-[140px] z-50"
-                      >
+              {/* Actions Menu */}
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpenId(menuOpenId === terminal.id ? null : terminal.id);
+                  }}
+                  className="p-0.5 rounded hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <MoreVertical size={14} className="text-text-secondary" />
+                </button>
+
+                <AnimatePresence>
+                  {menuOpenId === terminal.id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpenId(null);
+                        }}
+                      />
+                      <div className="absolute right-0 top-full mt-1 bg-bg-elevated ring-1 ring-white/[0.08] rounded-lg shadow-xl py-1 min-w-[140px] z-50">
                         {gridTerminalIds.includes(terminal.id) ? (
                           <button
                             onClick={(e) => {
@@ -173,7 +175,7 @@ export function Sidebar() {
                               removeFromGrid(terminal.id);
                               setMenuOpenId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-accent-primary hover:bg-accent-primary/10"
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-accent-primary hover:bg-accent-primary/10"
                           >
                             <Grid3X3 size={14} /> Remove from Grid
                           </button>
@@ -185,7 +187,7 @@ export function Sidebar() {
                               setGridMode(true);
                               setMenuOpenId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                            className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-primary hover:bg-white/[0.04]"
                           >
                             <Grid3X3 size={14} /> Add to Grid
                           </button>
@@ -196,7 +198,7 @@ export function Sidebar() {
                             setEditingNicknameId(terminal.id);
                             setMenuOpenId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-primary hover:bg-white/[0.04]"
                         >
                           <Tag size={14} /> Set Nickname
                         </button>
@@ -206,7 +208,7 @@ export function Sidebar() {
                             setEditingId(terminal.id);
                             setMenuOpenId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-primary hover:bg-white/[0.04]"
                         >
                           <Edit3 size={14} /> Rename
                         </button>
@@ -215,42 +217,42 @@ export function Sidebar() {
                             e.stopPropagation();
                             setMenuOpenId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-primary hover:bg-white/5"
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-text-primary hover:bg-white/[0.04]"
                         >
                           <Copy size={14} /> Duplicate
                         </button>
-                        <div className="h-px bg-white/10 my-1" />
+                        <div className="h-px bg-border my-1" />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             closeTerminal(terminal.id);
                             setMenuOpenId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-error hover:bg-error/10"
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-[12px] text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 size={14} /> Close
                         </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                      </div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </div>
+          </div>
+        ))}
 
         {terminalList.length === 0 && (
-          <div className="text-center text-text-secondary text-sm py-8">
-            {search ? 'No terminals found' : 'No terminals yet. Create one to get started!'}
+          <div className="text-center text-text-tertiary text-[12px] py-8">
+            {search ? 'No terminals found' : 'No terminals yet'}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-2 border-t border-border">
         <button
           onClick={() => openProfileModal()}
-          className="w-full text-text-secondary hover:text-text-primary text-sm py-2 hover:bg-white/5 rounded-lg transition-colors"
+          className="w-full text-text-secondary hover:text-text-primary text-[12px] py-1.5 hover:bg-white/[0.04] rounded-md transition-colors"
         >
           Manage Profiles
         </button>
