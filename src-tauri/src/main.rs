@@ -48,6 +48,8 @@ fn main() {
             commands::check_claude_update,
             commands::update_claude_code,
             commands::get_hints,
+            commands::get_workspaces,
+            commands::delete_workspace,
             commands::save_workspace,
             commands::load_workspace,
             commands::save_session_for_restore,

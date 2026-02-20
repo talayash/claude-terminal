@@ -55,6 +55,9 @@ export function TerminalTabs() {
                   {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
                     <div className="w-1.5 h-1.5 rounded-full bg-accent-primary flex-shrink-0" />
                   )}
+                  {terminal.color_tag && (
+                    <div className={`w-2 h-2 rounded-full ${terminal.color_tag} flex-shrink-0`} />
+                  )}
                   <span className="max-w-[160px] truncate">{terminal.nickname || terminal.label}</span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button

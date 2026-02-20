@@ -8,6 +8,7 @@ import { HintsPanel } from './components/HintsPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NewTerminalModal } from './components/NewTerminalModal';
+import { WorkspaceModal } from './components/WorkspaceModal';
 import { SetupWizard } from './components/SetupWizard';
 import { AutoUpdater } from './components/AutoUpdater';
 import { useAppStore } from './store/appStore';
@@ -68,7 +69,7 @@ interface SavedTerminalConfig {
 }
 
 function App() {
-  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, notifyOnFinish, restoreSession } = useAppStore();
+  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, workspaceModalOpen, notifyOnFinish, restoreSession } = useAppStore();
   const { handleTerminalOutput, updateTerminalStatus, createTerminal } = useTerminalStore();
   const [showSetup, setShowSetup] = useState<boolean | null>(null);
   const { notify } = useNotification();
@@ -208,6 +209,7 @@ function App() {
             {settingsOpen && <SettingsModal />}
             {profileModalOpen && <ProfileModal />}
             {newTerminalModalOpen && <NewTerminalModal />}
+            {workspaceModalOpen && <WorkspaceModal />}
           </AnimatePresence>
         </>
       )}

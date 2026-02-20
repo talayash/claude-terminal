@@ -36,8 +36,10 @@ export function NewTerminalModal() {
   const [nickname, setNickname] = useState('');
   const [workingDirectory, setWorkingDirectory] = useState('');
   const [claudeArgs, setClaudeArgs] = useState<string[]>(defaultClaudeArgs);
+  const [envVars, setEnvVars] = useState<Record<string, string>>({});
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [defaultDirectory, setDefaultDirectory] = useState('');
 
   useEffect(() => {
     loadProfiles();
@@ -49,13 +51,15 @@ export function NewTerminalModal() {
     if (selectedProfileId) {
       const profile = profiles.find(p => p.id === selectedProfileId);
       if (profile) {
-        if (profile.working_directory) {
-          setWorkingDirectory(profile.working_directory);
-        }
-        if (profile.claude_args.length > 0) {
-          setClaudeArgs(profile.claude_args);
-        }
+        setWorkingDirectory(profile.working_directory || defaultDirectory);
+        setClaudeArgs(profile.claude_args.length > 0 ? profile.claude_args : defaultClaudeArgs);
+        setEnvVars(profile.env_vars || {});
       }
+    } else {
+      // Reset to defaults when "No Profile" is selected
+      setWorkingDirectory(defaultDirectory);
+      setClaudeArgs(defaultClaudeArgs);
+      setEnvVars({});
     }
   }, [selectedProfileId, profiles]);
 
@@ -78,6 +82,7 @@ export function NewTerminalModal() {
     try {
       const home = await homeDir();
       setWorkingDirectory(home);
+      setDefaultDirectory(home);
     } catch (error) {
       console.error('Failed to get home directory:', error);
     }
@@ -125,7 +130,7 @@ export function NewTerminalModal() {
         label,
         workingDirectory,
         claudeArgs,
-        {},
+        envVars,
         colorTag,
         nickname || undefined
       );

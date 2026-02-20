@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3 } from 'lucide-react';
+import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3, FolderOpen } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
 
@@ -25,7 +25,7 @@ export function Sidebar() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname, unreadTerminalIds } = useTerminalStore();
-  const { openProfileModal, openNewTerminalModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
+  const { openProfileModal, openNewTerminalModal, openWorkspaceModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
 
   const terminalList = useMemo(() =>
     Array.from(terminals.values())
@@ -89,12 +89,17 @@ export function Sidebar() {
             }`}
           >
             <div className="flex items-start gap-2.5">
-              {/* Status & Unread */}
-              <div className="mt-1.5 relative flex-shrink-0">
-                <div className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[terminal.status]}`} />
-                {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
-                  <div className="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full bg-accent-primary" />
+              {/* Color Tag & Status & Unread */}
+              <div className="mt-1.5 flex items-center gap-1.5 flex-shrink-0">
+                {terminal.color_tag && (
+                  <div className={`w-2 h-2 rounded-full ${terminal.color_tag} flex-shrink-0`} />
                 )}
+                <div className="relative">
+                  <div className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[terminal.status]}`} />
+                  {unreadTerminalIds.has(terminal.id) && activeTerminalId !== terminal.id && (
+                    <div className="absolute -top-1 -right-1.5 w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                  )}
+                </div>
               </div>
 
               {/* Label & Info */}
@@ -249,7 +254,14 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div className="p-2 border-t border-border">
+      <div className="p-2 border-t border-border space-y-0.5">
+        <button
+          onClick={() => openWorkspaceModal()}
+          className="w-full flex items-center justify-center gap-1.5 text-text-secondary hover:text-text-primary text-[12px] py-1.5 hover:bg-white/[0.04] rounded-md transition-colors"
+        >
+          <FolderOpen size={13} />
+          Workspaces
+        </button>
         <button
           onClick={() => openProfileModal()}
           className="w-full text-text-secondary hover:text-text-primary text-[12px] py-1.5 hover:bg-white/[0.04] rounded-md transition-colors"

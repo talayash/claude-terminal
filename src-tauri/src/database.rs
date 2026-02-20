@@ -2,6 +2,14 @@ use crate::config::ConfigProfile;
 use crate::terminal::TerminalConfig;
 use rusqlite::{params, Connection};
 use directories::ProjectDirs;
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WorkspaceInfo {
+    pub name: String,
+    pub terminal_count: usize,
+    pub created_at: String,
+}
 
 pub struct Database {
     conn: Connection,
@@ -116,6 +124,33 @@ impl Database {
             "INSERT OR REPLACE INTO workspaces (name, terminals, created_at) VALUES (?1, ?2, ?3)",
             params![name, terminals_json, chrono::Utc::now().to_rfc3339()],
         ).map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    pub fn get_workspaces(&self) -> Result<Vec<WorkspaceInfo>, String> {
+        let mut stmt = self.conn
+            .prepare("SELECT name, terminals, created_at FROM workspaces WHERE name != '__last_session__' ORDER BY created_at DESC")
+            .map_err(|e| e.to_string())?;
+
+        let workspaces = stmt.query_map([], |row| {
+            let name: String = row.get(0)?;
+            let terminals_json: String = row.get(1)?;
+            let created_at: String = row.get(2)?;
+            let terminal_count = serde_json::from_str::<Vec<serde_json::Value>>(&terminals_json)
+                .map(|v| v.len())
+                .unwrap_or(0);
+            Ok(WorkspaceInfo { name, terminal_count, created_at })
+        }).map_err(|e| e.to_string())?;
+
+        workspaces.collect::<Result<Vec<_>, _>>().map_err(|e| e.to_string())
+    }
+
+    pub fn delete_workspace(&self, name: &str) -> Result<(), String> {
+        if name.starts_with("__") {
+            return Err("Cannot delete internal workspaces".to_string());
+        }
+        self.conn.execute("DELETE FROM workspaces WHERE name = ?1", params![name])
+            .map_err(|e| e.to_string())?;
         Ok(())
     }
 

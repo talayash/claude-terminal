@@ -336,6 +336,23 @@ pub async fn open_external_url(url: String) -> Result<(), String> {
 }
 
 #[command]
+pub async fn get_workspaces(
+    state: State<'_, AppState>,
+) -> Result<Vec<crate::database::WorkspaceInfo>, String> {
+    let db = state.db.lock().await;
+    db.get_workspaces()
+}
+
+#[command]
+pub async fn delete_workspace(
+    state: State<'_, AppState>,
+    name: String,
+) -> Result<(), String> {
+    let db = state.db.lock().await;
+    db.delete_workspace(&name)
+}
+
+#[command]
 pub async fn save_workspace(
     state: State<'_, AppState>,
     name: String,

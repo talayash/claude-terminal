@@ -208,6 +208,56 @@ export function ProfileModal() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-text-secondary text-[12px] mb-1.5">Environment Variables</label>
+                  <div className="space-y-1.5">
+                    {Object.entries(selectedProfile.env_vars).map(([key, value], index) => (
+                      <div key={index} className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={key}
+                          onChange={(e) => {
+                            const entries = Object.entries(selectedProfile.env_vars);
+                            entries[index] = [e.target.value, value];
+                            setSelectedProfile({ ...selectedProfile, env_vars: Object.fromEntries(entries) });
+                          }}
+                          className="flex-1 bg-bg-primary ring-1 ring-border-light rounded-md h-8 px-2 text-text-primary text-[12px] font-mono focus:outline-none focus:ring-accent-primary transition-colors"
+                          placeholder="KEY"
+                        />
+                        <span className="text-text-tertiary text-[12px]">=</span>
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={(e) => {
+                            setSelectedProfile({ ...selectedProfile, env_vars: { ...selectedProfile.env_vars, [key]: e.target.value } });
+                          }}
+                          className="flex-1 bg-bg-primary ring-1 ring-border-light rounded-md h-8 px-2 text-text-primary text-[12px] font-mono focus:outline-none focus:ring-accent-primary transition-colors"
+                          placeholder="value"
+                        />
+                        <button
+                          onClick={() => {
+                            const newVars = { ...selectedProfile.env_vars };
+                            delete newVars[key];
+                            setSelectedProfile({ ...selectedProfile, env_vars: newVars });
+                          }}
+                          className="p-1 rounded hover:bg-red-500/10 text-text-tertiary hover:text-red-400 transition-colors flex-shrink-0"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      onClick={() => {
+                        setSelectedProfile({ ...selectedProfile, env_vars: { ...selectedProfile.env_vars, '': '' } });
+                      }}
+                      className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary text-[12px] py-1 hover:bg-white/[0.04] rounded-md px-2 transition-colors"
+                    >
+                      <Plus size={13} />
+                      Add Variable
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"

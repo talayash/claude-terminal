@@ -10,6 +10,7 @@ interface AppState {
   profileModalOpen: boolean;
   editingProfileId: string | null;
   newTerminalModalOpen: boolean;
+  workspaceModalOpen: boolean;
   defaultClaudeArgs: string[];
   notifyOnFinish: boolean;
   restoreSession: boolean;
@@ -28,6 +29,8 @@ interface AppState {
   closeProfileModal: () => void;
   openNewTerminalModal: () => void;
   closeNewTerminalModal: () => void;
+  openWorkspaceModal: () => void;
+  closeWorkspaceModal: () => void;
   setDefaultClaudeArgs: (args: string[]) => void;
   setNotifyOnFinish: (enabled: boolean) => void;
   setRestoreSession: (enabled: boolean) => void;
@@ -67,6 +70,7 @@ export const useAppStore = create<AppState>()(
       profileModalOpen: false,
       editingProfileId: null,
       newTerminalModalOpen: false,
+      workspaceModalOpen: false,
       defaultClaudeArgs: ['--dangerously-skip-permissions'],
       notifyOnFinish: true,
       restoreSession: true,
@@ -85,6 +89,8 @@ export const useAppStore = create<AppState>()(
       closeProfileModal: () => set({ profileModalOpen: false, editingProfileId: null }),
       openNewTerminalModal: () => set({ newTerminalModalOpen: true }),
       closeNewTerminalModal: () => set({ newTerminalModalOpen: false }),
+      openWorkspaceModal: () => set({ workspaceModalOpen: true }),
+      closeWorkspaceModal: () => set({ workspaceModalOpen: false }),
       setDefaultClaudeArgs: (args) => set({ defaultClaudeArgs: args }),
       setNotifyOnFinish: (enabled) => set({ notifyOnFinish: enabled }),
       setRestoreSession: (enabled) => set({ restoreSession: enabled }),
