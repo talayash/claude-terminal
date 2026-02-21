@@ -394,3 +394,107 @@ pub async fn clear_last_session(state: State<'_, AppState>) -> Result<(), String
     let db = state.db.lock().await;
     db.clear_last_session()
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileChange {
+    pub path: String,
+    pub status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FileChangesResult {
+    pub terminal_id: String,
+    pub working_directory: String,
+    pub changes: Vec<FileChange>,
+    pub is_git_repo: bool,
+    pub branch: Option<String>,
+    pub error: Option<String>,
+}
+
+#[command]
+pub async fn get_terminal_changes(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<FileChangesResult, String> {
+    let working_directory = {
+        let terminals = state.terminals.lock().await;
+        let configs = terminals.get_all_configs();
+        configs
+            .into_iter()
+            .find(|c| c.id == id)
+            .map(|c| c.working_directory.clone())
+            .ok_or_else(|| "Terminal not found".to_string())?
+    };
+
+    // Check if it's a git repo and get branch name
+    let branch_output = shell_command("git", &["rev-parse", "--abbrev-ref", "HEAD"])
+        .current_dir(&working_directory)
+        .output();
+
+    let (is_git_repo, branch) = match branch_output {
+        Ok(output) if output.status.success() => {
+            let branch = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            (true, Some(branch))
+        }
+        _ => (false, None),
+    };
+
+    if !is_git_repo {
+        return Ok(FileChangesResult {
+            terminal_id: id,
+            working_directory,
+            changes: vec![],
+            is_git_repo: false,
+            branch: None,
+            error: None,
+        });
+    }
+
+    // Get changed files
+    let status_output = shell_command("git", &["status", "--porcelain"])
+        .current_dir(&working_directory)
+        .output()
+        .map_err(|e| format!("Failed to run git status: {}", e))?;
+
+    if !status_output.status.success() {
+        return Ok(FileChangesResult {
+            terminal_id: id,
+            working_directory,
+            changes: vec![],
+            is_git_repo: true,
+            branch,
+            error: Some(String::from_utf8_lossy(&status_output.stderr).trim().to_string()),
+        });
+    }
+
+    let stdout = String::from_utf8_lossy(&status_output.stdout);
+    let changes: Vec<FileChange> = stdout
+        .lines()
+        .filter(|line| line.len() >= 3)
+        .map(|line| {
+            let code = &line[..2];
+            let path = line[3..].to_string();
+            let status = match code.trim() {
+                "??" => "untracked",
+                "A" | "A " => "new",
+                "M" | "M " | " M" | "MM" => "modified",
+                "D" | "D " | " D" => "deleted",
+                r if r.starts_with('R') => "renamed",
+                _ => "modified",
+            };
+            FileChange {
+                path,
+                status: status.to_string(),
+            }
+        })
+        .collect();
+
+    Ok(FileChangesResult {
+        terminal_id: id,
+        working_directory,
+        changes,
+        is_git_repo: true,
+        branch,
+        error: None,
+    })
+}

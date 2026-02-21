@@ -55,6 +55,11 @@ export function useKeyboardShortcuts() {
         useAppStore.getState().toggleHints();
       }
 
+      if (e.key === 'F2') {
+        e.preventDefault();
+        useAppStore.getState().toggleChanges();
+      }
+
       // Toggle Grid Mode: Ctrl+G
       if (ctrl && e.key === 'g') {
         e.preventDefault();

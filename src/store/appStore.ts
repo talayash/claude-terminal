@@ -6,6 +6,7 @@ export type GridLayout = '1x1' | '1x2' | '2x1' | '2x2' | '1x3' | '3x1' | '2x3' |
 interface AppState {
   sidebarOpen: boolean;
   hintsOpen: boolean;
+  changesOpen: boolean;
   settingsOpen: boolean;
   profileModalOpen: boolean;
   editingProfileId: string | null;
@@ -15,6 +16,9 @@ interface AppState {
   notifyOnFinish: boolean;
   restoreSession: boolean;
 
+  // Changes panel
+  changesRefreshTrigger: number;
+
   // Grid state
   gridMode: boolean;
   gridTerminalIds: string[];
@@ -23,6 +27,8 @@ interface AppState {
 
   toggleSidebar: () => void;
   toggleHints: () => void;
+  toggleChanges: () => void;
+  triggerChangesRefresh: () => void;
   openSettings: () => void;
   closeSettings: () => void;
   openProfileModal: (profileId?: string) => void;
@@ -66,6 +72,7 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       sidebarOpen: true,
       hintsOpen: false,
+      changesOpen: false,
       settingsOpen: false,
       profileModalOpen: false,
       editingProfileId: null,
@@ -75,6 +82,9 @@ export const useAppStore = create<AppState>()(
       notifyOnFinish: true,
       restoreSession: true,
 
+      // Changes panel
+      changesRefreshTrigger: 0,
+
       // Grid state
       gridMode: false,
       gridTerminalIds: [],
@@ -83,6 +93,8 @@ export const useAppStore = create<AppState>()(
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       toggleHints: () => set((state) => ({ hintsOpen: !state.hintsOpen })),
+      toggleChanges: () => set((state) => ({ changesOpen: !state.changesOpen })),
+      triggerChangesRefresh: () => set((state) => ({ changesRefreshTrigger: state.changesRefreshTrigger + 1 })),
       openSettings: () => set({ settingsOpen: true }),
       closeSettings: () => set({ settingsOpen: false }),
       openProfileModal: (profileId) => set({ profileModalOpen: true, editingProfileId: profileId || null }),
@@ -135,6 +147,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
         hintsOpen: state.hintsOpen,
+        changesOpen: state.changesOpen,
         defaultClaudeArgs: state.defaultClaudeArgs,
         notifyOnFinish: state.notifyOnFinish,
         restoreSession: state.restoreSession,

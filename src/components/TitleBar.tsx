@@ -1,9 +1,9 @@
-import { PanelLeft, Lightbulb, Settings, Minus, Square, X } from 'lucide-react';
+import { PanelLeft, Lightbulb, FileDiff, Settings, Minus, Square, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useAppStore } from '../store/appStore';
 
 export function TitleBar() {
-  const { toggleSidebar, toggleHints, openSettings, sidebarOpen, hintsOpen } = useAppStore();
+  const { toggleSidebar, toggleHints, toggleChanges, openSettings, sidebarOpen, hintsOpen, changesOpen } = useAppStore();
   const appWindow = getCurrentWindow();
 
   return (
@@ -22,6 +22,16 @@ export function TitleBar() {
       </div>
 
       <div className="flex items-center gap-1 no-drag">
+        <button
+          onClick={toggleChanges}
+          className={`p-1 rounded transition-colors ${
+            changesOpen ? 'bg-accent-primary/15 text-accent-primary' : 'hover:bg-white/[0.04] text-text-secondary'
+          }`}
+          title="File Changes (F2)"
+        >
+          <FileDiff size={16} />
+        </button>
+
         <button
           onClick={toggleHints}
           className={`p-1 rounded transition-colors ${

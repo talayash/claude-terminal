@@ -59,6 +59,7 @@ fn main() {
             commands::install_claude_code,
             commands::open_external_url,
             commands::send_notification,
+            commands::get_terminal_changes,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {

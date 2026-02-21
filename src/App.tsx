@@ -5,6 +5,7 @@ import { TitleBar } from './components/TitleBar';
 import { Sidebar } from './components/Sidebar';
 import { TerminalTabs } from './components/TerminalTabs';
 import { HintsPanel } from './components/HintsPanel';
+import { FileChangesPanel } from './components/FileChangesPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { ProfileModal } from './components/ProfileModal';
 import { NewTerminalModal } from './components/NewTerminalModal';
@@ -69,7 +70,7 @@ interface SavedTerminalConfig {
 }
 
 function App() {
-  const { sidebarOpen, hintsOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, workspaceModalOpen, notifyOnFinish, restoreSession } = useAppStore();
+  const { sidebarOpen, hintsOpen, changesOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, workspaceModalOpen, notifyOnFinish, restoreSession, triggerChangesRefresh } = useAppStore();
   const { handleTerminalOutput, updateTerminalStatus, createTerminal } = useTerminalStore();
   const [showSetup, setShowSetup] = useState<boolean | null>(null);
   const { notify } = useNotification();
@@ -109,6 +110,7 @@ function App() {
       const name = terminal?.config.nickname || terminal?.config.label || 'Terminal';
 
       updateTerminalStatus(id, 'Stopped');
+      triggerChangesRefresh();
 
       if (notifyOnFinish) {
         notify('Terminal Finished', `${name} has finished running.`);
@@ -192,6 +194,17 @@ function App() {
             <main className="flex-1 flex flex-col overflow-hidden">
               <TerminalTabs />
             </main>
+
+            <AnimatePresence mode="wait">
+              {changesOpen && (
+                <div
+                  className="h-full overflow-hidden transition-all duration-150 ease-out"
+                  style={{ width: 300 }}
+                >
+                  <FileChangesPanel />
+                </div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence mode="wait">
               {hintsOpen && (
