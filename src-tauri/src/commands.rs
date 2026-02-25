@@ -1,4 +1,5 @@
 use crate::config::{ConfigProfile, HintCategory};
+use crate::database::{SessionHistoryEntry, Snippet};
 use crate::AppState;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -23,20 +24,46 @@ pub async fn create_terminal(
 ) -> Result<crate::terminal::TerminalConfig, String> {
     let (tx, mut rx) = mpsc::channel::<(String, Vec<u8>)>(100);
 
+    // Compute log file path
+    let log_path = {
+        let data_dir = directories::ProjectDirs::from("com", "claudeterminal", "ClaudeTerminal")
+            .ok_or("Failed to get project directories")?
+            .data_dir()
+            .to_path_buf();
+        let logs_dir = data_dir.join("logs");
+        std::fs::create_dir_all(&logs_dir).map_err(|e| e.to_string())?;
+        let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+        let filename = format!("{}_{}.log", uuid::Uuid::new_v4(), timestamp);
+        logs_dir.join(filename).to_string_lossy().to_string()
+    };
+
     let config = {
         let mut terminals = state.terminals.lock().await;
         terminals.create_terminal(
-            request.label,
+            request.label.clone(),
             request.working_directory,
             request.claude_args,
             request.env_vars,
             request.color_tag,
             request.nickname,
             tx,
+            Some(log_path.clone()),
         )?
     };
 
+    // Insert session history entry
+    {
+        let db = state.db.lock().await;
+        let _ = db.insert_session_history(
+            &config.id,
+            &config.label,
+            &config.created_at.to_rfc3339(),
+            Some(&log_path),
+        );
+    }
+
     let terminal_id = config.id.clone();
+    let db_arc = state.db.clone();
 
     let app_clone = app.clone();
     tokio::spawn(async move {
@@ -50,7 +77,12 @@ pub async fn create_terminal(
             }
         }
 
-        // Terminal process exited — notify the frontend
+        // Terminal process exited — update session history and notify frontend
+        {
+            let db = db_arc.lock().await;
+            let _ = db.update_session_ended(&terminal_id, &chrono::Utc::now().to_rfc3339());
+        }
+
         if let Err(e) = app_clone.emit("terminal-finished", serde_json::json!({
             "id": terminal_id,
         })) {
@@ -497,4 +529,71 @@ pub async fn get_terminal_changes(
         branch,
         error: None,
     })
+}
+
+// Session history commands
+
+#[command]
+pub async fn get_session_history(
+    state: State<'_, AppState>,
+) -> Result<Vec<SessionHistoryEntry>, String> {
+    let db = state.db.lock().await;
+    db.get_session_history()
+}
+
+#[command]
+pub async fn read_log_file(path: String) -> Result<String, String> {
+    // Validate path is under the logs directory
+    let data_dir = directories::ProjectDirs::from("com", "claudeterminal", "ClaudeTerminal")
+        .ok_or("Failed to get project directories")?
+        .data_dir()
+        .to_path_buf();
+    let logs_dir = data_dir.join("logs");
+    let canonical_path = std::path::Path::new(&path)
+        .canonicalize()
+        .map_err(|e| format!("Invalid path: {}", e))?;
+    let canonical_logs = logs_dir
+        .canonicalize()
+        .unwrap_or(logs_dir);
+    if !canonical_path.starts_with(&canonical_logs) {
+        return Err("Access denied: path is not under logs directory".to_string());
+    }
+    std::fs::read_to_string(&path).map_err(|e| format!("Failed to read log file: {}", e))
+}
+
+#[command]
+pub async fn delete_session_history(
+    state: State<'_, AppState>,
+    id: i64,
+    log_path: Option<String>,
+) -> Result<(), String> {
+    // Delete log file if it exists
+    if let Some(ref path) = log_path {
+        let _ = std::fs::remove_file(path);
+    }
+    let db = state.db.lock().await;
+    db.delete_session_history_entry(id)
+}
+
+// Snippet commands
+
+#[command]
+pub async fn save_snippet(
+    state: State<'_, AppState>,
+    snippet: Snippet,
+) -> Result<(), String> {
+    let db = state.db.lock().await;
+    db.save_snippet(&snippet)
+}
+
+#[command]
+pub async fn get_snippets(state: State<'_, AppState>) -> Result<Vec<Snippet>, String> {
+    let db = state.db.lock().await;
+    db.get_snippets()
+}
+
+#[command]
+pub async fn delete_snippet(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    let db = state.db.lock().await;
+    db.delete_snippet(&id)
 }

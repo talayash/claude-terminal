@@ -32,6 +32,38 @@ export function useKeyboardShortcuts() {
         useAppStore.getState().openNewTerminalModal();
       }
 
+      // Command Palette: Ctrl+P
+      if (ctrl && e.key === 'p') {
+        e.preventDefault();
+        useAppStore.getState().toggleCommandPalette();
+      }
+
+      // Snippets: Ctrl+Shift+S
+      if (ctrl && shift && e.key === 'S') {
+        e.preventDefault();
+        useAppStore.getState().openSnippetsModal();
+      }
+
+      // Split View: Ctrl+\
+      if (ctrl && e.key === '\\') {
+        e.preventDefault();
+        const { splitMode, clearSplit, setSplitTerminals, setSplitMode } = useAppStore.getState();
+        if (splitMode) {
+          clearSplit();
+        } else {
+          const terminals = terminalsRef.current;
+          const activeId = activeIdRef.current;
+          const terminalIds = Array.from(terminals.keys());
+          if (terminalIds.length >= 2 && activeId) {
+            const otherIds = terminalIds.filter(id => id !== activeId);
+            if (otherIds.length > 0) {
+              setSplitTerminals([activeId, otherIds[0]]);
+              setSplitMode(true);
+            }
+          }
+        }
+      }
+
       // Ctrl+Shift+F is handled inside TerminalView for search
 
       if (ctrl && e.key === 'b') {

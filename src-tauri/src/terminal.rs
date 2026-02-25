@@ -55,6 +55,7 @@ impl TerminalManager {
         color_tag: Option<String>,
         nickname: Option<String>,
         tx: mpsc::Sender<(String, Vec<u8>)>,
+        log_file_path: Option<String>,
     ) -> Result<TerminalConfig, String> {
         let pty_system = native_pty_system();
 
@@ -135,18 +136,27 @@ impl TerminalManager {
         let terminal_id = id.clone();
         std::thread::spawn(move || {
             let mut buf = [0u8; 8192];
+            let mut log_file = log_file_path.and_then(|path| {
+                std::fs::File::create(&path)
+                    .map_err(|e| eprintln!("Failed to create log file: {}", e))
+                    .ok()
+            });
             loop {
                 match reader.read(&mut buf) {
                     Ok(0) => break,
                     Ok(n) => {
                         let data = buf[..n].to_vec();
+                        // Write ANSI-stripped output to log file
+                        if let Some(ref mut file) = log_file {
+                            let stripped = strip_ansi_escapes::strip(&data);
+                            let _ = std::io::Write::write_all(file, &stripped);
+                        }
                         if tx.blocking_send((terminal_id.clone(), data)).is_err() {
                             break;
                         }
                     }
                     Err(e) => {
                         eprintln!("Error reading from pty: {}", e);
-                        // Send error message to frontend so the terminal shows the failure
                         let _ = tx.blocking_send((
                             terminal_id.clone(),
                             format!("\r\n[Error reading from terminal: {}]\r\n", e).into_bytes(),

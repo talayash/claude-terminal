@@ -359,12 +359,15 @@ export function SettingsModal() {
                 ['New Terminal', 'Ctrl+Shift+N'],
                 ['Close Terminal', 'Ctrl+W'],
                 ['Toggle Sidebar', 'Ctrl+B'],
+                ['Command Palette', 'Ctrl+P'],
                 ['Toggle Hints', 'F1'],
                 ['Switch Tab', 'Ctrl+Tab'],
                 ['Copy / Interrupt', 'Ctrl+C'],
                 ['Paste', 'Ctrl+V'],
                 ['Toggle Grid View', 'Ctrl+G'],
                 ['Add to Grid', 'Ctrl+Shift+G'],
+                ['Split View', 'Ctrl+\\'],
+                ['Snippets', 'Ctrl+Shift+S'],
                 ['Search Terminal', 'Ctrl+Shift+F'],
               ].map(([label, shortcut]) => (
                 <div key={label} className="flex justify-between text-[12px]">

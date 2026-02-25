@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3, FolderOpen } from 'lucide-react';
+import { Plus, Search, MoreVertical, Copy, Trash2, Edit3, Tag, Grid3X3, FolderOpen, Clock, FileText } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
 
@@ -25,7 +25,7 @@ export function Sidebar() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, updateLabel, updateNickname, unreadTerminalIds } = useTerminalStore();
-  const { openProfileModal, openNewTerminalModal, openWorkspaceModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
+  const { openProfileModal, openNewTerminalModal, openWorkspaceModal, openSessionHistory, openSnippetsModal, addToGrid, removeFromGrid, gridTerminalIds, setGridMode } = useAppStore();
 
   const terminalList = useMemo(() =>
     Array.from(terminals.values())
@@ -261,6 +261,20 @@ export function Sidebar() {
         >
           <FolderOpen size={13} />
           Workspaces
+        </button>
+        <button
+          onClick={() => openSessionHistory()}
+          className="w-full flex items-center justify-center gap-1.5 text-text-secondary hover:text-text-primary text-[12px] py-1.5 hover:bg-white/[0.04] rounded-md transition-colors"
+        >
+          <Clock size={13} />
+          Session History
+        </button>
+        <button
+          onClick={() => openSnippetsModal()}
+          className="w-full flex items-center justify-center gap-1.5 text-text-secondary hover:text-text-primary text-[12px] py-1.5 hover:bg-white/[0.04] rounded-md transition-colors"
+        >
+          <FileText size={13} />
+          Snippets
         </button>
         <button
           onClick={() => openProfileModal()}

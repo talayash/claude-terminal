@@ -60,6 +60,12 @@ fn main() {
             commands::open_external_url,
             commands::send_notification,
             commands::get_terminal_changes,
+            commands::get_session_history,
+            commands::read_log_file,
+            commands::delete_session_history,
+            commands::save_snippet,
+            commands::get_snippets,
+            commands::delete_snippet,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {

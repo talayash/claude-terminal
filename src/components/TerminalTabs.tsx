@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 import { AnimatePresence, Reorder } from 'framer-motion';
-import { X, Plus, Grid3X3 } from 'lucide-react';
+import { X, Plus, Grid3X3, SplitSquareHorizontal, RotateCw } from 'lucide-react';
 import { useTerminalStore } from '../store/terminalStore';
 import { useAppStore } from '../store/appStore';
 import { TerminalView } from './TerminalView';
 import { TerminalGrid } from './TerminalGrid';
+import { SplitView } from './SplitView';
 
 export function TerminalTabs() {
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, unreadTerminalIds } = useTerminalStore();
-  const { openNewTerminalModal, gridMode, toggleGridMode, addToGrid, gridTerminalIds } = useAppStore();
+  const { openNewTerminalModal, gridMode, toggleGridMode, addToGrid, gridTerminalIds, splitMode, splitTerminalIds, splitOrientation, splitRatio, setSplitOrientation, setSplitRatio, clearSplit, setSplitTerminals, setSplitMode } = useAppStore();
   const terminalList = useMemo(() => Array.from(terminals.values()).map(t => t.config), [terminals]);
 
   const handleNewTab = () => {
@@ -21,6 +22,58 @@ export function TerminalTabs() {
       toggleGridMode();
     }
   };
+
+  const handleSplitWith = (terminalId: string) => {
+    if (activeTerminalId && terminalId !== activeTerminalId) {
+      setSplitTerminals([activeTerminalId, terminalId]);
+      setSplitMode(true);
+    }
+  };
+
+  // If split mode is active with valid terminals, show split view
+  if (splitMode && splitTerminalIds && terminals.has(splitTerminalIds[0]) && terminals.has(splitTerminalIds[1])) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Split Toolbar */}
+        <div className="h-10 bg-bg-secondary border-b border-border flex items-center justify-between px-3">
+          <div className="flex items-center gap-2">
+            <SplitSquareHorizontal size={14} className="text-accent-primary" />
+            <span className="text-text-primary text-[12px] font-medium">Split View</span>
+            <span className="text-text-tertiary text-[11px]">
+              {terminals.get(splitTerminalIds[0])?.config.nickname || terminals.get(splitTerminalIds[0])?.config.label}
+              {' | '}
+              {terminals.get(splitTerminalIds[1])?.config.nickname || terminals.get(splitTerminalIds[1])?.config.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setSplitOrientation(splitOrientation === 'horizontal' ? 'vertical' : 'horizontal')}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:bg-white/[0.04] transition-colors"
+              title="Toggle orientation"
+            >
+              <RotateCw size={12} />
+              {splitOrientation === 'horizontal' ? 'Vertical' : 'Horizontal'}
+            </button>
+            <button
+              onClick={clearSplit}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:bg-white/[0.04] transition-colors"
+            >
+              <X size={12} />
+              Exit Split
+            </button>
+          </div>
+        </div>
+        <div className="flex-1">
+          <SplitView
+            terminalIds={splitTerminalIds}
+            orientation={splitOrientation}
+            ratio={splitRatio}
+            onRatioChange={setSplitRatio}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // If grid mode is active, show the grid
   if (gridMode) {
@@ -60,6 +113,18 @@ export function TerminalTabs() {
                   )}
                   <span className="max-w-[160px] truncate">{terminal.nickname || terminal.label}</span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {activeTerminalId && terminal.id !== activeTerminalId && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSplitWith(terminal.id);
+                        }}
+                        className="p-0.5 rounded hover:bg-white/[0.08] text-text-tertiary hover:text-text-secondary transition-colors"
+                        title="Split with active terminal"
+                      >
+                        <SplitSquareHorizontal size={12} />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

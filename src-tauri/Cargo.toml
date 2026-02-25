@@ -21,6 +21,7 @@ chrono = { version = "0.4", features = ["serde"] }
 rusqlite = { version = "0.31", features = ["bundled"] }
 directories = "5"
 open = "5"
+strip-ansi-escapes = "0.2"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

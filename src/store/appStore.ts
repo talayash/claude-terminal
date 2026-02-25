@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 
 export type GridLayout = '1x1' | '1x2' | '2x1' | '2x2' | '1x3' | '3x1' | '2x3' | '3x2' | '2x4' | '4x2';
 
+export type SplitOrientation = 'horizontal' | 'vertical';
+
 interface AppState {
   sidebarOpen: boolean;
   hintsOpen: boolean;
@@ -24,6 +26,25 @@ interface AppState {
   gridTerminalIds: string[];
   gridLayout: GridLayout;
   gridFocusedIndex: number | null;
+
+  // Command Palette (F1)
+  commandPaletteOpen: boolean;
+
+  // Session History (F2)
+  sessionHistoryOpen: boolean;
+
+  // Crash Recovery (F3)
+  showRestoreBanner: boolean;
+  pendingRestoreConfigs: SavedTerminalConfig[] | null;
+
+  // Split Pane (F4)
+  splitMode: boolean;
+  splitTerminalIds: [string, string] | null;
+  splitOrientation: SplitOrientation;
+  splitRatio: number;
+
+  // Snippets (F5)
+  snippetsModalOpen: boolean;
 
   toggleSidebar: () => void;
   toggleHints: () => void;
@@ -50,6 +71,40 @@ interface AppState {
   setGridLayout: (layout: GridLayout) => void;
   setGridFocusedIndex: (index: number | null) => void;
   clearGrid: () => void;
+
+  // Command Palette actions (F1)
+  openCommandPalette: () => void;
+  closeCommandPalette: () => void;
+  toggleCommandPalette: () => void;
+
+  // Session History actions (F2)
+  openSessionHistory: () => void;
+  closeSessionHistory: () => void;
+
+  // Crash Recovery actions (F3)
+  setShowRestoreBanner: (show: boolean) => void;
+  setPendingRestoreConfigs: (configs: SavedTerminalConfig[] | null) => void;
+
+  // Split Pane actions (F4)
+  toggleSplitMode: () => void;
+  setSplitMode: (enabled: boolean) => void;
+  setSplitTerminals: (ids: [string, string] | null) => void;
+  setSplitOrientation: (orientation: SplitOrientation) => void;
+  setSplitRatio: (ratio: number) => void;
+  clearSplit: () => void;
+
+  // Snippets actions (F5)
+  openSnippetsModal: () => void;
+  closeSnippetsModal: () => void;
+}
+
+interface SavedTerminalConfig {
+  label: string;
+  nickname: string | null;
+  working_directory: string;
+  claude_args: string[];
+  env_vars: Record<string, string>;
+  color_tag: string | null;
 }
 
 // Helper to determine optimal layout based on terminal count
@@ -90,6 +145,25 @@ export const useAppStore = create<AppState>()(
       gridTerminalIds: [],
       gridLayout: '1x1',
       gridFocusedIndex: null,
+
+      // Command Palette (F1)
+      commandPaletteOpen: false,
+
+      // Session History (F2)
+      sessionHistoryOpen: false,
+
+      // Crash Recovery (F3)
+      showRestoreBanner: false,
+      pendingRestoreConfigs: null,
+
+      // Split Pane (F4)
+      splitMode: false,
+      splitTerminalIds: null,
+      splitOrientation: 'horizontal' as SplitOrientation,
+      splitRatio: 0.5,
+
+      // Snippets (F5)
+      snippetsModalOpen: false,
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       toggleHints: () => set((state) => ({ hintsOpen: !state.hintsOpen })),
@@ -141,6 +215,31 @@ export const useAppStore = create<AppState>()(
         gridFocusedIndex: null,
         gridMode: false,
       }),
+
+      // Command Palette actions (F1)
+      openCommandPalette: () => set({ commandPaletteOpen: true }),
+      closeCommandPalette: () => set({ commandPaletteOpen: false }),
+      toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+      // Session History actions (F2)
+      openSessionHistory: () => set({ sessionHistoryOpen: true }),
+      closeSessionHistory: () => set({ sessionHistoryOpen: false }),
+
+      // Crash Recovery actions (F3)
+      setShowRestoreBanner: (show) => set({ showRestoreBanner: show }),
+      setPendingRestoreConfigs: (configs) => set({ pendingRestoreConfigs: configs }),
+
+      // Split Pane actions (F4)
+      toggleSplitMode: () => set((state) => ({ splitMode: !state.splitMode })),
+      setSplitMode: (enabled) => set({ splitMode: enabled }),
+      setSplitTerminals: (ids) => set({ splitTerminalIds: ids }),
+      setSplitOrientation: (orientation) => set({ splitOrientation: orientation }),
+      setSplitRatio: (ratio) => set({ splitRatio: Math.max(0.2, Math.min(0.8, ratio)) }),
+      clearSplit: () => set({ splitMode: false, splitTerminalIds: null, splitRatio: 0.5 }),
+
+      // Snippets actions (F5)
+      openSnippetsModal: () => set({ snippetsModalOpen: true }),
+      closeSnippetsModal: () => set({ snippetsModalOpen: false }),
     }),
     {
       name: 'claude-terminal-app',
