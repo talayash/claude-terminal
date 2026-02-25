@@ -15,12 +15,14 @@ import { SnippetsModal } from './components/SnippetsModal';
 import { CommandPalette } from './components/CommandPalette';
 import { SetupWizard } from './components/SetupWizard';
 import { AutoUpdater } from './components/AutoUpdater';
+import { WhatsNewModal } from './components/WhatsNewModal';
 import { useAppStore } from './store/appStore';
 import { useTerminalStore } from './store/terminalStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useNotification } from './hooks/useNotification';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
+import { getVersion } from '@tauri-apps/api/app';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -73,7 +75,7 @@ interface SavedTerminalConfig {
 }
 
 function App() {
-  const { sidebarOpen, hintsOpen, changesOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, workspaceModalOpen, sessionHistoryOpen, snippetsModalOpen, commandPaletteOpen, notifyOnFinish, restoreSession, triggerChangesRefresh, showRestoreBanner, pendingRestoreConfigs, setShowRestoreBanner, setPendingRestoreConfigs } = useAppStore();
+  const { sidebarOpen, hintsOpen, changesOpen, settingsOpen, profileModalOpen, newTerminalModalOpen, workspaceModalOpen, sessionHistoryOpen, snippetsModalOpen, commandPaletteOpen, whatsNewOpen, notifyOnFinish, restoreSession, triggerChangesRefresh, showRestoreBanner, pendingRestoreConfigs, setShowRestoreBanner, setPendingRestoreConfigs, lastSeenVersion, setLastSeenVersion, openWhatsNew } = useAppStore();
   const { handleTerminalOutput, updateTerminalStatus, createTerminal } = useTerminalStore();
   const [showSetup, setShowSetup] = useState<boolean | null>(null);
   const { notify } = useNotification();
@@ -92,6 +94,27 @@ function App() {
     };
     checkSetup();
   }, []);
+
+  // What's New check — runs after setup is confirmed
+  useEffect(() => {
+    if (showSetup !== false) return;
+
+    const checkWhatsNew = async () => {
+      try {
+        const currentVersion = await getVersion();
+        if (!lastSeenVersion) {
+          // Fresh install — just record the current version, no popup
+          setLastSeenVersion(currentVersion);
+        } else if (lastSeenVersion !== currentVersion) {
+          openWhatsNew();
+        }
+      } catch (err) {
+        console.error('Failed to check version for What\'s New:', err);
+      }
+    };
+
+    checkWhatsNew();
+  }, [showSetup]);
 
   useEffect(() => {
     const unlisten = listen<{ id: string; data: number[] }>('terminal-output', (event) => {
@@ -286,6 +309,7 @@ function App() {
             {workspaceModalOpen && <WorkspaceModal />}
             {sessionHistoryOpen && <SessionHistory />}
             {snippetsModalOpen && <SnippetsModal />}
+            {whatsNewOpen && <WhatsNewModal />}
           </AnimatePresence>
           {commandPaletteOpen && <CommandPalette />}
         </>

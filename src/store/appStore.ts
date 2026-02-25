@@ -46,6 +46,10 @@ interface AppState {
   // Snippets (F5)
   snippetsModalOpen: boolean;
 
+  // What's New
+  whatsNewOpen: boolean;
+  lastSeenVersion: string | null;
+
   toggleSidebar: () => void;
   toggleHints: () => void;
   toggleChanges: () => void;
@@ -96,6 +100,11 @@ interface AppState {
   // Snippets actions (F5)
   openSnippetsModal: () => void;
   closeSnippetsModal: () => void;
+
+  // What's New actions
+  openWhatsNew: () => void;
+  closeWhatsNew: () => void;
+  setLastSeenVersion: (version: string) => void;
 }
 
 interface SavedTerminalConfig {
@@ -164,6 +173,10 @@ export const useAppStore = create<AppState>()(
 
       // Snippets (F5)
       snippetsModalOpen: false,
+
+      // What's New
+      whatsNewOpen: false,
+      lastSeenVersion: null,
 
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       toggleHints: () => set((state) => ({ hintsOpen: !state.hintsOpen })),
@@ -240,6 +253,11 @@ export const useAppStore = create<AppState>()(
       // Snippets actions (F5)
       openSnippetsModal: () => set({ snippetsModalOpen: true }),
       closeSnippetsModal: () => set({ snippetsModalOpen: false }),
+
+      // What's New actions
+      openWhatsNew: () => set({ whatsNewOpen: true }),
+      closeWhatsNew: () => set({ whatsNewOpen: false }),
+      setLastSeenVersion: (version) => set({ lastSeenVersion: version }),
     }),
     {
       name: 'claude-terminal-app',
@@ -250,6 +268,7 @@ export const useAppStore = create<AppState>()(
         defaultClaudeArgs: state.defaultClaudeArgs,
         notifyOnFinish: state.notifyOnFinish,
         restoreSession: state.restoreSession,
+        lastSeenVersion: state.lastSeenVersion,
       }),
     }
   )

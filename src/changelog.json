@@ -1,0 +1,66 @@
+[
+  {
+    "version": "1.10.0",
+    "date": "2026-02-25",
+    "features": [
+      { "title": "Command Palette (F1)", "description": "Quick access to all actions via a searchable command palette" },
+      { "title": "Output Logging", "description": "Automatically log terminal output to files for later review" },
+      { "title": "Crash Recovery (F3)", "description": "Restore your previous session after an unexpected shutdown" },
+      { "title": "Split Pane (F4)", "description": "View two terminals side by side with adjustable split ratio" },
+      { "title": "Snippets (F5)", "description": "Save and quickly insert reusable text snippets into terminals" }
+    ]
+  },
+  {
+    "version": "1.9.0",
+    "date": "2026-02-25",
+    "features": [
+      { "title": "Session History (F2)", "description": "Browse and search your past terminal sessions" },
+      { "title": "Workspace Save/Load", "description": "Save and restore complete workspace configurations" }
+    ]
+  },
+  {
+    "version": "1.8.1",
+    "date": "2026-02-25",
+    "features": [
+      { "title": "Screenshot updates", "description": "Updated README screenshots with current app views" }
+    ]
+  },
+  {
+    "version": "1.8.0",
+    "date": "2026-02-21",
+    "features": [
+      { "title": "File Changes Panel", "description": "Per-terminal git status panel showing changed files" }
+    ]
+  },
+  {
+    "version": "1.7.2",
+    "date": "2026-02-20",
+    "features": [
+      { "title": "Bug fixes and stability improvements" }
+    ]
+  },
+  {
+    "version": "1.7.1",
+    "date": "2026-02-18",
+    "features": [
+      { "title": "UI refinements", "description": "Dynamic version display and backend improvements" }
+    ]
+  },
+  {
+    "version": "1.7.0",
+    "date": "2026-02-18",
+    "features": [
+      { "title": "Claude Code Agents", "description": "Manage Claude Code agents directly from the app" },
+      { "title": "Commands & Settings", "description": "New commands and settings management features" }
+    ]
+  },
+  {
+    "version": "1.6.0",
+    "date": "2026-02-18",
+    "features": [
+      { "title": "Configuration Profiles", "description": "Create and switch between saved terminal configurations" },
+      { "title": "In-app Auto-updater", "description": "Automatic update detection and installation" },
+      { "title": "Keyboard Shortcuts", "description": "Global keyboard shortcuts for common actions" }
+    ]
+  }
+]
