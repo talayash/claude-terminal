@@ -66,6 +66,7 @@ fn main() {
             commands::save_snippet,
             commands::get_snippets,
             commands::delete_snippet,
+            commands::get_active_teams,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { .. } = event {

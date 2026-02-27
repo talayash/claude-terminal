@@ -620,3 +620,93 @@ pub async fn delete_snippet(state: State<'_, AppState>, id: String) -> Result<()
     let db = state.db.lock().await;
     db.delete_snippet(&id)
 }
+
+// Agent Teams (multi-agent orchestration)
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamMember {
+    pub agent_id: String,
+    pub name: String,
+    pub agent_type: String,
+    pub model: Option<String>,
+    pub joined_at: Option<u64>,
+    pub cwd: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamConfig {
+    pub name: String,
+    pub description: Option<String>,
+    pub created_at: Option<u64>,
+    pub lead_agent_id: Option<String>,
+    pub members: Vec<TeamMember>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamInfo {
+    pub dir_name: String,
+    pub config: TeamConfig,
+    pub task_count: Option<u32>,
+}
+
+#[command]
+pub async fn get_active_teams() -> Result<Vec<TeamInfo>, String> {
+    let home = if cfg!(target_os = "windows") {
+        std::env::var("USERPROFILE").map_err(|_| "USERPROFILE not set".to_string())?
+    } else {
+        std::env::var("HOME").map_err(|_| "HOME not set".to_string())?
+    };
+
+    let teams_dir = std::path::Path::new(&home).join(".claude").join("teams");
+    if !teams_dir.exists() {
+        return Ok(vec![]);
+    }
+
+    let entries = std::fs::read_dir(&teams_dir).map_err(|e| e.to_string())?;
+    let mut teams = Vec::new();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        let config_path = path.join("config.json");
+        if !config_path.exists() {
+            continue;
+        }
+
+        let config_str = match std::fs::read_to_string(&config_path) {
+            Ok(s) => s,
+            Err(_) => continue,
+        };
+
+        let config: TeamConfig = match serde_json::from_str(&config_str) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        let dir_name = entry.file_name().to_string_lossy().to_string();
+
+        // Read task count from .highwatermark
+        let tasks_dir = std::path::Path::new(&home)
+            .join(".claude")
+            .join("tasks")
+            .join(&dir_name);
+        let hwm_path = tasks_dir.join(".highwatermark");
+        let task_count = std::fs::read_to_string(&hwm_path)
+            .ok()
+            .and_then(|s| s.trim().parse::<u32>().ok());
+
+        teams.push(TeamInfo {
+            dir_name,
+            config,
+            task_count,
+        });
+    }
+
+    Ok(teams)
+}

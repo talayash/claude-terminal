@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { PanelLeft, Lightbulb, FileDiff, Settings, Minus, Square, X } from 'lucide-react';
+import { PanelLeft, Lightbulb, FileDiff, Users, Settings, Minus, Square, X } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getVersion } from '@tauri-apps/api/app';
 import { useAppStore } from '../store/appStore';
 
 export function TitleBar() {
-  const { toggleSidebar, toggleHints, toggleChanges, openSettings, sidebarOpen, hintsOpen, changesOpen } = useAppStore();
+  const { toggleSidebar, toggleHints, toggleChanges, toggleOrchestration, openSettings, sidebarOpen, hintsOpen, changesOpen, orchestrationOpen } = useAppStore();
   const appWindow = getCurrentWindow();
   const [appVersion, setAppVersion] = useState('');
 
@@ -39,6 +39,16 @@ export function TitleBar() {
           title="File Changes (F2)"
         >
           <FileDiff size={16} />
+        </button>
+
+        <button
+          onClick={toggleOrchestration}
+          className={`p-1 rounded transition-colors ${
+            orchestrationOpen ? 'bg-accent-primary/15 text-accent-primary' : 'hover:bg-white/[0.04] text-text-secondary'
+          }`}
+          title="Agent Teams (F4)"
+        >
+          <Users size={16} />
         </button>
 
         <button

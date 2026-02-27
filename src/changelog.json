@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.12.0",
+    "date": "2026-02-27",
+    "features": [
+      { "title": "Agent Teams Panel (F4)", "description": "Monitor Claude Code multi-agent team sessions with real-time team structure, member details, and task counts" }
+    ]
+  },
+  {
     "version": "1.11.0",
     "date": "2026-02-25",
     "features": [

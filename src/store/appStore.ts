@@ -37,11 +37,14 @@ interface AppState {
   showRestoreBanner: boolean;
   pendingRestoreConfigs: SavedTerminalConfig[] | null;
 
-  // Split Pane (F4)
+  // Split Pane (Ctrl+\)
   splitMode: boolean;
   splitTerminalIds: [string, string] | null;
   splitOrientation: SplitOrientation;
   splitRatio: number;
+
+  // Agent Teams (F4)
+  orchestrationOpen: boolean;
 
   // Snippets (F5)
   snippetsModalOpen: boolean;
@@ -89,13 +92,16 @@ interface AppState {
   setShowRestoreBanner: (show: boolean) => void;
   setPendingRestoreConfigs: (configs: SavedTerminalConfig[] | null) => void;
 
-  // Split Pane actions (F4)
+  // Split Pane actions (Ctrl+\)
   toggleSplitMode: () => void;
   setSplitMode: (enabled: boolean) => void;
   setSplitTerminals: (ids: [string, string] | null) => void;
   setSplitOrientation: (orientation: SplitOrientation) => void;
   setSplitRatio: (ratio: number) => void;
   clearSplit: () => void;
+
+  // Agent Teams actions (F4)
+  toggleOrchestration: () => void;
 
   // Snippets actions (F5)
   openSnippetsModal: () => void;
@@ -165,11 +171,14 @@ export const useAppStore = create<AppState>()(
       showRestoreBanner: false,
       pendingRestoreConfigs: null,
 
-      // Split Pane (F4)
+      // Split Pane (Ctrl+\)
       splitMode: false,
       splitTerminalIds: null,
       splitOrientation: 'horizontal' as SplitOrientation,
       splitRatio: 0.5,
+
+      // Agent Teams (F4)
+      orchestrationOpen: false,
 
       // Snippets (F5)
       snippetsModalOpen: false,
@@ -242,13 +251,16 @@ export const useAppStore = create<AppState>()(
       setShowRestoreBanner: (show) => set({ showRestoreBanner: show }),
       setPendingRestoreConfigs: (configs) => set({ pendingRestoreConfigs: configs }),
 
-      // Split Pane actions (F4)
+      // Split Pane actions (Ctrl+\)
       toggleSplitMode: () => set((state) => ({ splitMode: !state.splitMode })),
       setSplitMode: (enabled) => set({ splitMode: enabled }),
       setSplitTerminals: (ids) => set({ splitTerminalIds: ids }),
       setSplitOrientation: (orientation) => set({ splitOrientation: orientation }),
       setSplitRatio: (ratio) => set({ splitRatio: Math.max(0.2, Math.min(0.8, ratio)) }),
       clearSplit: () => set({ splitMode: false, splitTerminalIds: null, splitRatio: 0.5 }),
+
+      // Agent Teams actions (F4)
+      toggleOrchestration: () => set((state) => ({ orchestrationOpen: !state.orchestrationOpen })),
 
       // Snippets actions (F5)
       openSnippetsModal: () => set({ snippetsModalOpen: true }),
@@ -268,6 +280,7 @@ export const useAppStore = create<AppState>()(
         defaultClaudeArgs: state.defaultClaudeArgs,
         notifyOnFinish: state.notifyOnFinish,
         restoreSession: state.restoreSession,
+        orchestrationOpen: state.orchestrationOpen,
         lastSeenVersion: state.lastSeenVersion,
       }),
     }

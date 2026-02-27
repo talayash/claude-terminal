@@ -92,6 +92,11 @@ export function useKeyboardShortcuts() {
         useAppStore.getState().toggleChanges();
       }
 
+      if (e.key === 'F4') {
+        e.preventDefault();
+        useAppStore.getState().toggleOrchestration();
+      }
+
       // Toggle Grid Mode: Ctrl+G
       if (ctrl && e.key === 'g') {
         e.preventDefault();
