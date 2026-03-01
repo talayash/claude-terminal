@@ -16,7 +16,7 @@ export function TitleBar() {
   }, []);
 
   return (
-    <div className="h-8 bg-bg-secondary flex items-center justify-between px-2 border-b border-border drag-region">
+    <div onMouseDown={(e) => { if (e.buttons === 1 && (e.target as HTMLElement).closest('.no-drag') === null) appWindow.startDragging(); }} className="h-8 bg-bg-secondary flex items-center justify-between px-2 border-b border-border drag-region">
       <div className="flex items-center gap-3 no-drag">
         {isMac && (
           <div className="flex items-center gap-1.5 mr-1">
