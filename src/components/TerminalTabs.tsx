@@ -7,6 +7,8 @@ import { TerminalView } from './TerminalView';
 import { TerminalGrid } from './TerminalGrid';
 import { SplitView } from './SplitView';
 
+const isMac = navigator.platform.toUpperCase().includes('MAC');
+
 export function TerminalTabs() {
   const { terminals, activeTerminalId, setActiveTerminal, closeTerminal, unreadTerminalIds } = useTerminalStore();
   const { openNewTerminalModal, gridMode, toggleGridMode, addToGrid, gridTerminalIds, splitMode, splitTerminalIds, splitOrientation, splitRatio, setSplitOrientation, setSplitRatio, clearSplit, setSplitTerminals, setSplitMode } = useAppStore();
@@ -195,7 +197,7 @@ export function TerminalTabs() {
             </div>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-text-secondary">
-              <p className="text-[13px] text-text-tertiary mb-4">Press Ctrl+Shift+N to start a new terminal</p>
+              <p className="text-[13px] text-text-tertiary mb-4">Press {isMac ? 'Cmd' : 'Ctrl'}+Shift+N to start a new terminal</p>
               <div className="flex gap-3">
                 <button
                   onClick={handleNewTab}

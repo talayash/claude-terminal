@@ -293,10 +293,14 @@ fn shell_command(program: &str, args: &[&str]) -> std::process::Command {
         }
         cmd
     } else {
-        let mut cmd = std::process::Command::new(program);
+        let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".to_string());
+        let mut full_cmd = program.to_string();
         for arg in args {
-            cmd.arg(arg);
+            full_cmd.push(' ');
+            full_cmd.push_str(arg);
         }
+        let mut cmd = std::process::Command::new(shell);
+        cmd.arg("-lc").arg(&full_cmd);
         cmd
     }
 }
@@ -366,6 +370,7 @@ pub async fn send_notification(title: String, body: String) -> Result<(), String
             .summary(&title)
             .body(&body)
             .show()
+            .map(|_| ())
             .map_err(|e| e.to_string())
     })
     .await

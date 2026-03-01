@@ -6,6 +6,9 @@ import { getVersion } from '@tauri-apps/api/app';
 import { useAppStore } from '../store/appStore';
 import { useUpdaterStore } from '../store/updaterStore';
 
+const isMac = navigator.platform.toUpperCase().includes('MAC');
+const mod = isMac ? 'Cmd' : 'Ctrl';
+
 interface UpdateCheckResult {
   current_version: string;
   latest_version: string;
@@ -356,19 +359,19 @@ export function SettingsModal() {
             <h3 className="text-text-primary text-[13px] font-medium mb-2">Keyboard Shortcuts</h3>
             <div className="bg-bg-primary rounded-md ring-1 ring-border p-3 space-y-1.5">
               {[
-                ['New Terminal', 'Ctrl+Shift+N'],
-                ['Close Terminal', 'Ctrl+W'],
-                ['Toggle Sidebar', 'Ctrl+B'],
-                ['Command Palette', 'Ctrl+P'],
+                ['New Terminal', `${mod}+Shift+N`],
+                ['Close Terminal', `${mod}+W`],
+                ['Toggle Sidebar', `${mod}+B`],
+                ['Command Palette', `${mod}+P`],
                 ['Toggle Hints', 'F1'],
-                ['Switch Tab', 'Ctrl+Tab'],
-                ['Copy / Interrupt', 'Ctrl+C'],
-                ['Paste', 'Ctrl+V'],
-                ['Toggle Grid View', 'Ctrl+G'],
-                ['Add to Grid', 'Ctrl+Shift+G'],
-                ['Split View', 'Ctrl+\\'],
-                ['Snippets', 'Ctrl+Shift+S'],
-                ['Search Terminal', 'Ctrl+Shift+F'],
+                ['Switch Tab', `${mod}+Tab`],
+                ['Copy / Interrupt', `${mod}+C`],
+                ['Paste', `${mod}+V`],
+                ['Toggle Grid View', `${mod}+G`],
+                ['Add to Grid', `${mod}+Shift+G`],
+                ['Split View', `${mod}+\\`],
+                ['Snippets', `${mod}+Shift+S`],
+                ['Search Terminal', `${mod}+Shift+F`],
               ].map(([label, shortcut]) => (
                 <div key={label} className="flex justify-between text-[12px]">
                   <span className="text-text-secondary">{label}</span>

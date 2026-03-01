@@ -8,7 +8,7 @@ default = []
 devtools = ["tauri/devtools"]
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["macos-private-api"] }
 tauri-plugin-shell = "2"
 tauri-plugin-process = "2"
 tauri-plugin-store = "2"
