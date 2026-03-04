@@ -10,6 +10,7 @@
     "devUrl": "http://localhost:5173"
   },
   "app": {
+    "macOSPrivateApi": true,
     "withGlobalTauri": false,
     "windows": [
       {
@@ -31,12 +32,12 @@
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": true,
-    "targets": ["msi", "nsis"],
+    "targets": ["msi", "nsis", "dmg", "app"],
     "icon": ["icons/icon.png", "icons/icon.ico"],
     "resources": [],
     "copyright": "Copyright 2024 ClaudeTerminal",
     "shortDescription": "Multi-Instance Claude Code Terminal Manager",
-    "longDescription": "ClaudeTerminal is a modern Windows desktop application for managing multiple Claude Code terminal instances. Features include multi-terminal management, configuration profiles, command hints, and a beautiful glassmorphic interface.",
+    "longDescription": "ClaudeTerminal is a modern desktop application for managing multiple Claude Code terminal instances. Features include multi-terminal management, configuration profiles, command hints, and a beautiful glassmorphic interface.",
     "category": "DeveloperTool",
     "publisher": "ClaudeTerminal",
     "windows": {
@@ -55,6 +56,9 @@
         "language": "en-US",
         "upgradeCode": "d8f3b5a2-1c4e-4a9f-b7d6-3e8c2f1a0b9d"
       }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
     }
   },
   "plugins": {

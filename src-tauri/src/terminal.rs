@@ -122,13 +122,15 @@ impl TerminalManager {
                 return Err(format!("Shell not found: {}", shell));
             }
             let mut c = CommandBuilder::new(shell);
-            // Pass each argument individually to prevent command injection
-            // (instead of joining into a single string that gets shell-interpreted)
-            c.arg("-ic");
-            c.arg("claude");
+            // Join claude + args into a single command string for -c.
+            // Safe because args are validated against shell metacharacters above.
+            let mut full_cmd = "claude".to_string();
             for arg in &claude_args {
-                c.arg(arg);
+                full_cmd.push(' ');
+                full_cmd.push_str(arg);
             }
+            c.arg("-lc");
+            c.arg(&full_cmd);
             c
         };
 

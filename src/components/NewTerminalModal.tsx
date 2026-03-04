@@ -7,6 +7,8 @@ import { useTerminalStore } from '../store/terminalStore';
 import { homeDir } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/plugin-dialog';
 
+const isMac = navigator.platform.toUpperCase().includes('MAC');
+
 interface ConfigProfile {
   id: string;
   name: string;
@@ -242,7 +244,7 @@ export function NewTerminalModal() {
                 value={workingDirectory}
                 onChange={(e) => setWorkingDirectory(e.target.value)}
                 className="flex-1 bg-bg-primary ring-1 ring-border-light rounded-md h-9 px-3 text-text-primary text-[13px] focus:outline-none focus:ring-accent-primary transition-colors"
-                placeholder="C:\path\to\project"
+                placeholder={isMac ? "/path/to/project" : "C:\\path\\to\\project"}
               />
               <button
                 onClick={handleBrowseDirectory}
