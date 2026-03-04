@@ -91,16 +91,21 @@ export function TerminalView({ terminalId }: TerminalViewProps) {
         return true;
       }
 
+      // Ctrl+V: Let browser handle paste natively — fires paste event
+      // on xterm's internal textarea, which xterm processes via onData.
+      // This is more reliable than the async Clipboard API which can fail
+      // silently due to focus/permission issues.
       if (isCtrl && e.key === 'v') {
+        return false;
+      }
+
+      // Ctrl+Z: Send suspend/EOF signal to terminal (prevent browser undo)
+      if (isCtrl && !e.shiftKey && e.key === 'z') {
         if (e.type === 'keydown') {
           e.preventDefault();
-          navigator.clipboard.readText().then((text) => {
-            if (text) {
-              writeToTerminal(terminalId, text);
-            }
-          });
+          writeToTerminal(terminalId, '\x1a');
         }
-        return false; // Block both keydown and keyup from xterm
+        return false;
       }
 
       return true;
